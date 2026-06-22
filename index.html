@@ -1,0 +1,2427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebobinado — Registro de Producción</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;500;600&display=swap');
+:root{
+  --bg:#0d0f18;--sur:#13161f;--card:#181c28;--bor:#252c3f;
+  --gold:#f5a623;--teal:#00d4aa;--blue:#3b82f6;
+  --red:#ef4444;--green:#22c55e;--warn:#f59e0b;
+  --txt:#dde3f0;--mut:#4f5878;--mut2:#7a85a3;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--sur);border-bottom:3px solid var(--gold);height:52px;
+  padding:0 20px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:300;}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;
+  letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+.logo span{color:var(--mut2);font-weight:400;font-size:13px;margin-left:6px;}
+#clock{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;
+  color:var(--teal);letter-spacing:2px;}
+#fecha-txt{font-size:11px;color:var(--mut2);}
+
+/* NAVBAR */
+.nav{background:var(--sur);border-bottom:2px solid var(--gold);
+  display:flex;overflow-x:auto;padding:0 16px;scrollbar-width:none;}
+.nav::-webkit-scrollbar{display:none;}
+.tab{padding:0 16px;height:42px;display:flex;align-items:center;gap:6px;
+  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--mut2);
+  cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;
+  margin-bottom:-2px;transition:all .15s;}
+.tab:hover{color:var(--txt);}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* PAGES */
+.pg{display:none;max-width:1060px;margin:0 auto;padding:18px 16px 80px;}
+.pg.on{display:block;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+.st{background:var(--card);border:1px solid var(--bor);border-radius:9px;
+  padding:12px;text-align:center;}
+.st .v{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;
+  line-height:1;color:var(--gold);}
+.st .l{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--mut);margin-top:3px;}
+.st.teal .v{color:var(--teal);}.st.blue .v{color:var(--blue);}
+.st.green .v{color:var(--green);}.st.red .v{color:var(--red);}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--bor);border-radius:10px;
+  padding:18px 20px;margin-bottom:14px;}
+.ch{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;
+  letter-spacing:3px;text-transform:uppercase;color:var(--gold);
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bor);}
+.ch .n{background:var(--gold);color:#0d0f18;font-size:10px;font-weight:900;
+  width:18px;height:18px;border-radius:50%;display:inline-flex;
+  align-items:center;justify-content:center;flex-shrink:0;}
+.ch.red-h{color:var(--red);}.ch.red-h .n{background:var(--red);}
+
+/* FORM */
+.fg{display:grid;gap:10px;margin-bottom:10px;}
+.fg.c1{grid-template-columns:1fr;}
+.fg.c2{grid-template-columns:1fr 1fr;}
+.fg.c3{grid-template-columns:1fr 1fr 1fr;}
+.fg.c4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.fl label{display:block;font-size:9px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--mut2);margin-bottom:4px;}
+.fl input,.fl select,.fl textarea{
+  width:100%;background:var(--sur);border:1px solid var(--bor);
+  border-radius:6px;color:var(--txt);font-family:'Barlow',sans-serif;
+  font-size:14px;padding:9px 10px;outline:none;
+  transition:border-color .15s;}
+.fl input:focus,.fl select:focus{border-color:var(--gold);}
+.fl input[readonly]{color:var(--teal);cursor:default;}
+.fl select option{background:var(--sur);}
+.fl textarea{min-height:54px;resize:vertical;}
+
+/* SELECT máquina */
+.maq-wrap{position:relative;}
+.maq-wrap select{appearance:none;-webkit-appearance:none;cursor:pointer;
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;}
+.maq-wrap::after{content:"▼";position:absolute;right:12px;top:50%;
+  transform:translateY(-50%);color:var(--mut2);pointer-events:none;font-size:10px;}
+.maq-wrap select.sel{border-color:var(--gold);color:var(--gold);}
+
+/* OP SEARCH */
+.op-wrap{position:relative;}
+.op-dd{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:500;
+  background:var(--card);border:1px solid var(--bor);border-radius:8px;
+  max-height:220px;overflow-y:auto;display:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);}
+.op-dd.on{display:block;}
+.oi{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--bor);transition:background .1s;}
+.oi:last-child{border-bottom:none;}
+.oi:hover{background:rgba(245,166,35,.1);}
+.oi-top{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--gold);}
+.oi-sub{font-size:11px;color:var(--mut2);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.no-op{padding:10px 12px;text-align:center;color:var(--mut);font-size:12px;}
+
+/* PANEL INFO OP */
+.op-panel{background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.2);
+  border-radius:8px;padding:12px 14px;margin-top:10px;display:none;}
+.op-panel.on{display:block;}
+.op-panel-title{font-size:9px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--teal);margin-bottom:8px;}
+.op-panel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 16px;}
+.op-kv span{font-size:11px;color:var(--mut2);}
+.op-kv strong{font-size:12px;color:var(--txt);display:block;}
+.op-desc{margin-top:6px;font-size:12px;}
+.op-desc span{color:var(--mut2);}
+.op-desc strong{color:var(--txt);}
+
+/* TURNO badge */
+.turno-disp{background:var(--sur);border:1px solid var(--bor);border-radius:6px;
+  padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-size:15px;
+  font-weight:700;color:var(--mut2);letter-spacing:2px;}
+.turno-disp.dia{color:var(--blue);border-color:var(--blue);}
+.turno-disp.noche{color:var(--mut2);border-color:rgba(156,163,175,.4);}
+
+/* KPIs parada */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:10px 0;}
+.kpi{background:var(--sur);border:1px solid var(--bor);border-radius:7px;
+  padding:10px;text-align:center;}
+.kpi .kv{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;
+  color:var(--teal);line-height:1;}
+.kpi .kl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--mut);margin-top:2px;}
+.kpi.or .kv{color:var(--gold);}.kpi.gr .kv{color:var(--green);}
+
+/* LIVE BANNER */
+.live{background:rgba(34,197,94,.06);border:1.5px solid rgba(34,197,94,.3);
+  border-radius:9px;padding:12px 16px;margin-bottom:12px;display:none;}
+.live.on{display:flex;align-items:flex-start;gap:12px;}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--green);
+  flex-shrink:0;margin-top:4px;animation:pulse 1.4s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6);}
+  70%{box-shadow:0 0 0 8px rgba(34,197,94,0);}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}}
+.live-body{}
+.live-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:900;
+  letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:5px;}
+.live-info{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;}
+.live-info span{color:var(--mut2);} .live-info strong{color:var(--txt);}
+
+/* BTNS */
+.btn{width:100%;padding:13px;border:none;border-radius:8px;
+  font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.btn-go{background:var(--green);color:#fff;}
+.btn-go:hover:not(:disabled){background:#16a34a;transform:translateY(-1px);}
+.btn-go:disabled{background:var(--bor);color:var(--mut);cursor:not-allowed;transform:none;}
+.btn-stop{background:var(--red);color:#fff;}
+.btn-stop:hover{background:#dc2626;transform:translateY(-1px);}
+.btn-sm{width:auto;padding:8px 16px;font-size:13px;}
+
+/* TABLA */
+.tbl-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.tbl-label{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;color:var(--mut2);}
+.btn-xl{background:var(--sur);border:1px solid var(--bor);color:var(--mut2);
+  padding:7px 14px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;transition:all .15s;}
+.btn-xl:hover{border-color:var(--teal);color:var(--teal);}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--sur);padding:7px 8px;text-align:left;
+  font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--mut);border-bottom:1px solid var(--bor);white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(37,44,63,.7);transition:background .1s;}
+tbody tr:hover{background:rgba(255,255,255,.018);}
+tbody td{padding:7px 8px;white-space:nowrap;}
+.td-op{color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;}
+.td-teal{color:var(--teal);font-weight:600;}
+.td-n{text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:13px;}
+.td-hl{color:var(--teal);}
+.td-s{color:var(--mut2);font-size:11px;}
+.td-desc{max-width:180px;overflow:hidden;text-overflow:ellipsis;}
+.bdg{display:inline-block;padding:2px 6px;border-radius:3px;
+  font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase;}
+.b-dia{background:rgba(59,130,246,.15);color:#60a5fa;}
+.b-noche{background:rgba(107,114,128,.14);color:#9ca3af;}
+.b-ok{background:rgba(34,197,94,.15);color:var(--green);}
+.b-pend{background:rgba(245,158,11,.15);color:var(--warn);}
+.btn-del{background:none;border:none;color:var(--mut);cursor:pointer;
+  padding:3px 6px;border-radius:3px;transition:all .13s;}
+.btn-del:hover{background:rgba(239,68,68,.15);color:var(--red);}
+.empty{text-align:center;padding:30px;color:var(--mut);font-size:13px;}
+
+/* GS STATUS */
+.gs-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:var(--sur);border:1px solid var(--bor);border-radius:7px;
+  margin-bottom:12px;font-size:12px;}
+.gs-dot{width:8px;height:8px;border-radius:50%;background:var(--mut);flex-shrink:0;}
+.gs-dot.ok{background:var(--green);}.gs-dot.err{background:var(--red);}
+.gs-dot.load{background:var(--warn);animation:blink .8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;border-radius:7px;
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+  letter-spacing:1px;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.5);
+  display:none;z-index:999;animation:su .25s ease;}
+@keyframes su{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+.t-ok{background:var(--green);}.t-err{background:var(--red);}.t-warn{background:var(--warn);color:#000;}
+
+@media(max-width:680px){
+  .stats{grid-template-columns:repeat(3,1fr);}
+  .fg.c4,.fg.c3,.fg.c2{grid-template-columns:1fr;}
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .op-panel-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 4mm; }
+  html, body { background: #fff !important; }
+  body > *:not(#pdf-print) { display: none !important; }
+  #pdf-print {
+    display: block !important;
+    position: static !important;
+    background: #fff !important;
+    color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  #pdf-print * {
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #pdf-print th, #pdf-print td {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #000 !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">REBOBINADO<span>Registro de Producción</span></div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <span id="fecha-txt"></span>
+    <div id="clock">00:00:00</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <div class="tab on"  data-pg="reg"  onclick="goTab(this)">📋 Registrar</div>
+  <div class="tab"     data-pg="hist" onclick="goTab(this)">📊 Historial</div>
+  <div class="tab"     data-pg="avance" onclick="goTab(this)">⚡ Avance Turno</div>
+  <div class="tab"     data-pg="mermas" onclick="goTab(this)">⚠️ Mermas</div>
+  <div class="tab"     data-pg="pers"   onclick="goTab(this)">👤 Personal</div>
+  <div class="tab"     data-pg="config" onclick="goTab(this)">⚙️ Config</div>
+</nav>
+
+<!-- ═══ REGISTRAR ═══ -->
+<div class="pg on" id="pg-reg">
+  <div style="height:14px"></div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="st teal"><div class="v" id="s0">0</div><div class="l">Registros Hoy</div></div>
+    <div class="st blue"><div class="v" id="s1">0</div><div class="l">Rollos</div></div>
+    <div class="st">    <div class="v" id="s2">0</div><div class="l">KG</div></div>
+    <div class="st green"><div class="v" id="s3">0</div><div class="l">Completos</div></div>
+    <div class="st red"> <div class="v" id="s4">0</div><div class="l">Pendientes</div></div>
+  </div>
+
+  <!-- PASO 1 -->
+  <div class="card">
+    <div class="ch"><span class="n">1</span>Asistente · Maquinista · Máquina</div>
+    <div class="fg c3">
+      <div class="fl">
+        <label>Asistente (Encargado)</label>
+        <select id="f-asist">
+          <option value="">— Seleccionar —</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label>Maquinista — DNI (autocompleta nombre)</label>
+        <input type="text" id="f-maqsta-dni" placeholder="Escribe el DNI" autocomplete="off"
+          oninput="onDNIChange(this.value)" maxlength="8">
+        <div id="f-maqsta-nombre" style="font-size:12px;color:var(--teal);margin-top:4px;min-height:16px"></div>
+        <input type="hidden" id="f-maqsta" value="">
+      </div>
+      <div class="fl">
+        <label>Máquina</label>
+        <div class="maq-wrap">
+          <select id="f-maq" onchange="this.classList.toggle('sel',this.value!='')">
+            <option value="">Seleccionar...</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2 -->
+  <div class="card">
+    <div class="ch" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px">
+        <span class="n">2</span>Orden de Producción
+      </span>
+      <button onclick="cargarMPS(true)" style="background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.3);
+        color:var(--teal);padding:5px 12px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;
+        font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+        🔄 Actualizar OPs
+      </button>
+    </div>
+
+    <!-- GS STATUS -->
+    <div class="gs-bar">
+      <div class="gs-dot load" id="gs-dot"></div>
+      <span id="gs-msg" style="color:var(--mut2)">Conectando al MPS...</span>
+    </div>
+
+    <div class="fg c1" style="margin-bottom:10px">
+      <div class="fl">
+        <label>N° OP — escribe para buscar</label>
+        <div class="op-wrap">
+          <input type="text" id="f-op" placeholder="Ej: 82005"
+            autocomplete="off"
+            oninput="buscarOP(this.value)"
+            onblur="setTimeout(()=>document.getElementById('op-dd').classList.remove('on'),200)">
+          <div class="op-dd" id="op-dd"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel info OP (aparece al seleccionar) -->
+    <div class="op-panel" id="op-panel">
+      <div class="op-panel-title">📦 Datos del Pedido — MPS</div>
+      <div class="op-panel-grid">
+        <div class="op-kv"><span>N° Pedido</span><strong id="pi-ped">—</strong></div>
+        <div class="op-kv"><span>Cliente</span><strong id="pi-cli">—</strong></div>
+        <div class="op-kv"><span>Código</span><strong id="pi-cod">—</strong></div>
+        <div class="op-kv"><span>Rollos</span><strong id="pi-rol">—</strong></div>
+        <div class="op-kv"><span>Cajas</span><strong id="pi-caj">—</strong></div>
+        <div class="op-kv"><span>Tuco</span><strong id="pi-tuc">—</strong></div>
+      </div>
+      <div class="op-desc"><span>Descripción: </span><strong id="pi-desc">—</strong></div>
+      <div style="margin-top:4px;font-size:12px">
+        <span style="color:var(--mut2)">KG/rollo: </span>
+        <strong id="pi-kgr" style="color:var(--gold)">—</strong>
+        <span style="color:var(--mut2);margin-left:14px">KG Total pedido: </span>
+        <strong id="pi-kgt" style="color:var(--teal)">—</strong>
+      </div>
+    </div>
+
+    <!-- Campos ocultos con datos del MPS -->
+    <input type="hidden" id="h-ped">
+    <input type="hidden" id="h-cli">
+    <input type="hidden" id="h-cod">
+    <input type="hidden" id="h-desc">
+    <input type="hidden" id="h-rol">
+    <input type="hidden" id="h-caj">
+    <input type="hidden" id="h-tuc">
+    <input type="hidden" id="h-kgr">
+    <input type="hidden" id="h-kgt">
+    <input type="hidden" id="h-lote">
+  </div>
+
+  <!-- PASO 3 -->
+  <div class="card">
+    <div class="ch"><span class="n">3</span>Inicio de Producción</div>
+    <div class="fg c3">
+      <div class="fl">
+        <label>Turno (automático por hora)</label>
+        <div class="turno-disp" id="turno-disp">— Se asigna al iniciar —</div>
+      </div>
+      <div class="fl">
+        <label>Hora Inicio (automática)</label>
+        <input type="text" id="f-hinicio" readonly placeholder="— : —">
+      </div>
+      <div class="fl">
+        <label>Fecha (automática)</label>
+        <input type="text" id="f-fecha" readonly placeholder="—">
+      </div>
+    </div>
+    <button class="btn btn-go" id="btn-ini" onclick="iniciar()">
+      ▶ INICIAR PRODUCCIÓN — CAPTURA HORA AHORA
+    </button>
+  </div>
+
+  <!-- LIVE BANNER -->
+  <div class="live" id="live-banner">
+    <div class="live-dot"></div>
+    <div class="live-body">
+      <div class="live-title">⚡ Producción en Curso</div>
+      <div class="live-info" id="live-info"></div>
+    </div>
+  </div>
+
+  <!-- PASO 4: PARADA -->
+  <div class="card" id="card-stop" style="display:none">
+    <div class="ch red-h"><span class="n">4</span>Parada — Registro de Producción</div>
+
+    <!-- PRODUCCIÓN -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:8px">📦 Producción</div>
+    <div class="fg c4">
+      <input type="hidden" id="f-hfin" value="">
+      <div class="fl"><label>Lote</label>
+        <input type="text" id="f-lote-prod" placeholder="N° Lote" autocomplete="off"></div>
+      <div class="fl"><label>Rollos Producidos este turno</label>
+        <input type="number" id="f-prod" placeholder="0" min="0" 
+          oninput="recalc()" onchange="recalc()"></div>
+      <div class="fl"><label>Cajas <span style="color:var(--teal);font-size:9px">AUTO</span></label>
+        <input type="number" id="f-cajas-prod" placeholder="0" min="0"></div>
+    </div>
+    <input type="hidden" id="f-ant" value="0">
+
+    <div class="kpis">
+      <div class="kpi or"><div class="kv" id="k-rol">0</div><div class="kl">Rollos Prod.</div></div>
+      <div class="kpi">  <div class="kv" id="k-kg">0.00</div><div class="kl">KG Producidos</div></div>
+      <div class="kpi gr"><div class="kv" id="k-pct">0%</div><div class="kl">Avance Pedido</div></div>
+      <div class="kpi" id="k-estbox">
+        <div class="kv" id="k-est" style="font-size:14px;color:var(--mut)">—</div>
+        <div class="kl">Estado</div>
+      </div>
+    </div>
+
+    <!-- DATOS DEL PRODUCTO -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin:14px 0 8px">🔧 Datos del Producto</div>
+    <div class="fg c2">
+      <div class="fl"><label>Color de Bobina <span style="color:var(--teal);font-size:8px">AUTO del BOM</span></label>
+        <input type="text" id="f-bobina" readonly placeholder="—" style="color:var(--teal)">
+      </div>
+      <div class="fl"><label>Peso de Tuco <span style="color:var(--teal);font-size:8px">AUTO</span></label>
+        <input type="text" id="f-peso-tuco" readonly placeholder="—" style="color:var(--teal)"></div>
+      <input type="hidden" id="f-color" value="NATURAL">
+    </div>
+    <div class="fg c1">
+      <div class="fl"><label>Velocidad (M/MIN)</label>
+        <input type="text" id="f-velocidad" placeholder="Ej: 1400 M/MIN" autocomplete="off"></div>
+    </div>
+    <input type="hidden" id="f-tinsrv" value="0">
+    <input type="hidden" id="f-treutil" value="0">
+
+    <!-- MERMA -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin:14px 0 8px">⚠️ Merma — cada motivo tiene su propio KG</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="fl"><label>V — Tuco Colapsado (kg)</label>
+        <input type="number" id="m-tuco-col" placeholder="0" step="0.01" min="0"></div>
+      <div class="fl"><label>W — Peso Bajo (kg)</label>
+        <input type="number" id="m-peso-bajo" placeholder="0" step="0.01" min="0"></div>
+      <div class="fl"><label>X — Peso Alto (kg)</label>
+        <input type="number" id="m-peso-alto" placeholder="0" step="0.01" min="0"></div>
+      <div class="fl"><label>Y — Variación de espesor (kg)</label>
+        <input type="number" id="m-var-esp" placeholder="0" step="0.01" min="0"></div>
+      <div class="fl"><label>Z — Saldo de Bobina (kg)</label>
+        <input type="number" id="m-saldo-bob" placeholder="0" step="0.01" min="0"></div>
+      <div class="fl"><label>AA — Rollos Con Hueco (kg)</label>
+        <input type="number" id="m-rol-hueco" placeholder="0" step="0.01" min="0"></div>
+      <div class="fl"><label>AB — Rollos Con Aire (kg)</label>
+        <input type="number" id="m-rol-aire" placeholder="0" step="0.01" min="0"></div>
+      <div class="fl"><label>AC — Rollos Con Arrugas (kg)</label>
+        <input type="number" id="m-rol-arr" placeholder="0" step="0.01" min="0"></div>
+      <div class="fl"><label>AD — Tucos Arqueados (kg)</label>
+        <input type="number" id="m-tuco-arq" placeholder="0" step="0.01" min="0"></div>
+    </div>
+    <input type="hidden" id="f-mkg" value="0">
+    <input type="hidden" id="f-mkg-color" value="0">
+    <input type="hidden" id="f-mtipo" value="">
+
+    <!-- checkboxes ocultos para compatibilidad -->
+    <input type="hidden" id="cc-arrugas" value="">
+    <input type="hidden" id="cc-aire" value="">
+    <input type="hidden" id="cc-caja" value="">
+    <input type="hidden" id="cc-peso" value="">
+    <input type="hidden" id="cc-centro" value="">
+
+    <!-- OBSERVACIÓN -->
+    <div class="fg c1">
+      <div class="fl"><label>Observación / Paradas</label>
+        <textarea id="f-obs" placeholder="Velocidad, incidencias, paradas, cambio de bobina..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn btn-stop" onclick="parar()">⏹ REGISTRAR PARADA Y GUARDAR</button>
+  </div>
+</div><!-- /pg-reg -->
+
+<!-- ═══ HISTORIAL ═══ -->
+<div class="pg" id="pg-hist">
+  <div style="height:14px"></div>
+  <div class="tbl-hdr">
+    <div class="tbl-label">Historial Completo</div>
+    <div style="display:flex;gap:8px">
+    <button class="btn-xl" onclick="exportarExcel()">⬇ Excel</button>
+    <button class="btn-xl" onclick="imprimirPDF()" style="border-color:rgba(239,68,68,.4);color:var(--red)">🖨 PDF Auditoría</button>
+  </div>
+  </div>
+  <div class="card" style="padding:12px 14px">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Fecha</th><th>Mes</th><th>Encargado</th><th>Maq</th><th>Maquinista</th>
+          <th>Horario</th><th>TIPO</th><th>OP</th><th>LOTE</th><th>Codigo</th>
+          <th>Bobina</th><th>Descripción</th><th>Rollos</th><th>Cajas</th>
+          <th>PRD PARTES(kg)</th><th>Peso x Rollo</th><th>Med.Tuco</th>
+          <th>Merma nat.</th><th>Mot.Merma</th>
+          <th>HORAS</th><th>H.inicial</th><th>H.final</th><th></th>
+        </tr></thead>
+        <tbody id="hist-body"></tbody>
+      </table>
+      <div id="hist-empty" class="empty">Sin registros aún.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AVANCE TURNO ═══ -->
+<div class="pg" id="pg-avance">
+  <div style="height:14px"></div>
+
+  <!-- KPIs GENERALES -->
+  <div style="display:grid;grid-template-columns:1.3fr 1.3fr 1fr 1fr;gap:10px;margin-bottom:14px">
+    <div class="card" style="text-align:center;padding:12px;background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(0,212,170,.05));border-color:rgba(0,212,170,.3)">
+      <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);margin-bottom:4px">📋 PROGRAMA GENERAL</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:var(--teal)" id="av-prog-gral">0</div>
+      <div style="font-size:9px;color:var(--mut)">KG totales programados</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px;background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(59,130,246,.05));border-color:rgba(59,130,246,.3)">
+      <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);margin-bottom:4px">📈 AVANCE ACUMULADO</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:var(--blue)" id="av-acum">0</div>
+      <div style="font-size:9px;color:var(--mut)">KG producidos total</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut2);margin-bottom:4px">☀️ DÍA HOY</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--mut2)" id="av-dia">0</div>
+      <div style="font-size:9px;color:var(--mut)">rollos</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut2);margin-bottom:4px">🌙 NOCHE HOY</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--mut2)" id="av-noche">0</div>
+      <div style="font-size:9px;color:var(--mut)">rollos</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:10px 12px;margin-bottom:14px">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button onclick="cargarAvanceConsolidado()" 
+        style="background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.3);color:var(--teal);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-weight:700">
+        🔄 ACTUALIZAR
+      </button>
+      <input type="text" id="av-search" placeholder="Buscar OP, cliente, código..." 
+        oninput="filtrarAvance(this.value)"
+        style="flex:1;min-width:150px;padding:7px 10px;border-radius:8px;border:1px solid var(--bor);background:var(--bg2);color:var(--txt);font-size:12px">
+      <span style="font-size:9px;color:var(--mut)" id="av-status"></span>
+    </div>
+  </div>
+
+  <!-- SECCIONES POR CATEGORÍA -->
+  <div id="av-secciones"></div>
+</div>
+
+<!-- ═══ MERMAS ═══ -->
+<div class="pg" id="pg-mermas">
+  <div style="height:14px"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
+    <div class="card" style="text-align:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--red)" id="m-kg">0</div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-top:3px">KG Merma Hoy</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--warn)" id="m-pct">0%</div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-top:3px">% sobre KG producidos</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--gold)" id="m-regs">0</div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-top:3px">Registros con merma</div>
+    </div>
+  </div>
+  <div class="card" style="padding:12px 14px">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Hora</th><th>OP</th><th>Maquinista</th><th class="td-n">KG Merma</th><th>Tipo</th><th>Observación</th></tr></thead>
+        <tbody id="mer-body"></tbody>
+      </table>
+      <div id="mer-empty" class="empty">Sin mermas hoy.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PERSONAL ═══ -->
+<div class="pg" id="pg-pers">
+  <div style="height:14px"></div>
+  <div class="card">
+    <div class="ch"><span class="n">A</span>Gestión de Asistentes</div>
+    <div id="asist-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <div class="fg c2">
+      <div class="fl">
+        <label>Agregar asistente</label>
+        <input type="text" id="new-asist" placeholder="Nombre completo"
+          onkeydown="if(event.key==='Enter')addAsist()">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn btn-go btn-sm" onclick="addAsist()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><span class="n">R</span>Rendimiento Hoy</div>
+    <div id="pers-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="empty" style="grid-column:1/-1">Sin datos del día.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONFIGURACIÓN ═══ -->
+<div class="pg" id="pg-config">
+  <div style="height:14px"></div>
+
+  <!-- MÁQUINAS -->
+  <div class="card">
+    <div class="ch"><span class="n">M</span>Máquinas / Rebobinadoras</div>
+    <div id="maq-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <div class="fg c2">
+      <div class="fl">
+        <label>Agregar número de máquina</label>
+        <input type="text" id="new-maq" placeholder="Ej: 11"
+          onkeydown="if(event.key==='Enter')addMaq()">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn btn-go btn-sm" onclick="addMaq()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASISTENTES -->
+  <div class="card">
+    <div class="ch"><span class="n">A</span>Asistentes / Encargados</div>
+    <div id="asist-chips-cfg" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <div class="fg c2">
+      <div class="fl">
+        <label>Agregar asistente</label>
+        <input type="text" id="new-asist-cfg" placeholder="Nombre completo"
+          onkeydown="if(event.key==='Enter')addAsistCfg()">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn btn-go btn-sm" onclick="addAsistCfg()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAQUINISTAS -->
+  <div class="card">
+    <div class="ch"><span class="n">O</span>Operarios / Maquinistas</div>
+    <div id="oper-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <div class="fg c2">
+      <div class="fl">
+        <label>Agregar operario</label>
+        <input type="text" id="new-oper" placeholder="Nombre completo"
+          onkeydown="if(event.key==='Enter')addOper()">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn btn-go btn-sm" onclick="addOper()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   CONFIGURACIÓN — URLs Google Sheets
+══════════════════════════════════════════ */
+const GS_MPS    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvvkaJowutisF8bIVKtwU8dtlLCXElFKVLG3u4F_2A9jbWhVSZPlk2SYFwAPnONVwvFiHcvR1aq-8S/pub?gid=1003436557&single=true&output=csv';
+const GS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxVpOMjFUV3bgfWnBWAkE82DZ0nbxig07SG5LJKRM5eoSf-211EvRlpZYjxM1PImKqQ/exec';
+
+/* ══════════════════════════════════════════
+   OPs LOCAL (del MPS Excel)
+══════════════════════════════════════════ */
+let OPS_LOCAL = [];
+const BOM_DATA = {"3000187":{"kg":8.0,"pulg":"10","micras":"20","color":"NATURAL","c":0.5,"p":"tuco 10\""},"0030191":{"kg":16.0,"pulg":"20","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030801":{"kg":18.0,"pulg":"20","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0031420":{"kg":17.0,"pulg":"20","micras":"17","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002331":{"kg":17.0,"pulg":"20","micras":"17","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"001425":{"kg":16.0,"pulg":"20","micras":"18","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0031083":{"kg":12.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"001750":{"kg":14.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030196":{"kg":15.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"000094":{"kg":16.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002347":{"kg":16.0,"pulg":"20","micras":"20.3","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002023":{"kg":15.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002596":{"kg":15.2,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0032023":{"kg":15.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030160":{"kg":17.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002296":{"kg":17.0,"pulg":"20","micras":"25","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"000202":{"kg":17.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002219":{"kg":16.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0002287":{"kg":16.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002286":{"kg":17.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002289":{"kg":17.0,"pulg":"20","micras":"30","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002101":{"kg":17.0,"pulg":"30","micras":"21","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0002727":{"kg":21.0,"pulg":"30","micras":"21","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002370":{"kg":28.0,"pulg":"30","micras":"18","color":"BLANCO","c":1.0,"p":"AUTOMÁTICO"},"0032157":{"kg":17.0,"pulg":"30","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"002311":{"kg":2.0,"pulg":"6","micras":"20","color":"NATURAL","c":0.125,"p":"TUCO 6\""},"0030464":{"kg":2.0,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0030059":{"kg":8.0,"pulg":"10","micras":"20","color":"NATURAL","c":0.5,"p":"tuco 10\""},"0300446":{"kg":7.5,"pulg":"10","micras":"20","color":"NATURAL","c":0.5,"p":"tuco 10\""},"0030181":{"kg":1.2000000000000002,"pulg":"12","micras":"18","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0030171":{"kg":2.0,"pulg":"12","micras":"18","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0030371":{"kg":1.0,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0030060":{"kg":1.1,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0030061":{"kg":1.2000000000000002,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0030228":{"kg":1.3,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0030229":{"kg":1.7000000000000002,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0030063":{"kg":2.0,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0030375":{"kg":1.0,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0030379":{"kg":1.1,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0300001":{"kg":1.1,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0030064":{"kg":1.2,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0030065":{"kg":1.3,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0030231":{"kg":1.5,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0031556":{"kg":2.0,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0030068":{"kg":2.3000000000000003,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0032155":{"kg":2.2,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0030959":{"kg":3.1,"pulg":"18","micras":"13","color":"NATURAL","c":0.25,"p":"400 GR"},"0030151":{"kg":3.8000000000000003,"pulg":"18","micras":"13","color":"NATURAL","c":0.25,"p":"400 GR"},"0030924":{"kg":2.0,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0032037":{"kg":2.25,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0030236":{"kg":2.3,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0030150":{"kg":2.5,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0031102":{"kg":3.0,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"001730":{"kg":3.0,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0032148":{"kg":3.0,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0030154":{"kg":3.1,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"400 GR"},"002451":{"kg":3.3,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"400 GR"},"0300018":{"kg":3.5,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"400 GR"},"002285":{"kg":3.5,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"400 GR"},"000241":{"kg":3.0,"pulg":"18","micras":"17","color":"NATURAL","c":0.25,"p":"320 GR"},"0030172":{"kg":1.75,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"002150":{"kg":1.8,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0031269":{"kg":2.0,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"002614":{"kg":2.1,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0030161":{"kg":2.5,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"000161":{"kg":2.5,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"002429":{"kg":2.8000000000000003,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"002167":{"kg":3.0,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0030073":{"kg":3.0,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"001424":{"kg":3.1,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"000153":{"kg":3.5,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0030153":{"kg":3.5,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0030246":{"kg":3.8000000000000003,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"000246":{"kg":3.8,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0031115":{"kg":1.3,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000247":{"kg":1.4,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0031023":{"kg":1.4,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030247":{"kg":1.4,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030074":{"kg":1.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300000":{"kg":1.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030453":{"kg":1.6,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030319":{"kg":1.6,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000319":{"kg":1.6,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000076":{"kg":1.7,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030076":{"kg":1.7000000000000002,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000075":{"kg":1.75,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030248":{"kg":1.8,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000248":{"kg":1.8,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000249":{"kg":1.8,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030077":{"kg":1.9,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030078":{"kg":2.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"001908":{"kg":2.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000078":{"kg":2.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030250":{"kg":2.1,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030079":{"kg":2.2,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030174":{"kg":2.3,"pulg":"18","micras":"22","color":"NATURAL","c":0.25,"p":"320 GR"},"0030080":{"kg":2.4000000000000004,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000080":{"kg":2.4000000000000004,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030251":{"kg":2.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030081":{"kg":2.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"002241":{"kg":2.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030082":{"kg":2.6,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000082":{"kg":2.6,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030175":{"kg":2.7,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030252":{"kg":2.8000000000000003,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030254":{"kg":2.9,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000254":{"kg":2.9000000000000004,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000255":{"kg":2.95,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030083":{"kg":3.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000083":{"kg":3.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"001332":{"kg":3.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030084":{"kg":3.1,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"300011":{"kg":3.2,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"000176":{"kg":3.2,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"000256":{"kg":3.3000000000000003,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"002575":{"kg":3.4,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0031348":{"kg":3.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"001348":{"kg":3.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"001460":{"kg":3.6,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"001984":{"kg":3.8000000000000003,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"002147":{"kg":4.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0030257":{"kg":5.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"500 GR"},"002547":{"kg":1.3,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"002149":{"kg":1.4,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"000258":{"kg":2.0,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0030844":{"kg":2.4000000000000004,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"000844":{"kg":2.4,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"002449":{"kg":2.5,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0030986":{"kg":2.0,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0002728":{"kg":2.5,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"000074":{"kg":1.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000518":{"kg":2.7,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000252":{"kg":2.8,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"001767":{"kg":3.0,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"002168":{"kg":3.5,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"400 GR"},"002413":{"kg":1.4,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0030263":{"kg":1.75,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"002244":{"kg":2.5,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"000266":{"kg":2.9000000000000004,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0030267":{"kg":3.0,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"001953":{"kg":3.3000000000000003,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"000995":{"kg":1.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0031871":{"kg":1.3,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"002315":{"kg":1.3,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030090":{"kg":1.4,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030268":{"kg":1.45,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030091":{"kg":1.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000091":{"kg":1.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300005":{"kg":1.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030269":{"kg":1.6,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000269":{"kg":1.6,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030152":{"kg":1.6,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030270":{"kg":1.7000000000000002,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030413":{"kg":1.7,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"000092":{"kg":1.75,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030092":{"kg":1.75,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030095":{"kg":1.8,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"002386":{"kg":1.85,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"500 GR"},"0300015":{"kg":1.9,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030093":{"kg":1.9,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000093":{"kg":1.9,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030096":{"kg":2.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030271":{"kg":2.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030103":{"kg":2.0,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030272":{"kg":2.1,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000273":{"kg":2.2,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030273":{"kg":2.2,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"002495":{"kg":2.25,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030274":{"kg":2.3000000000000003,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"002577":{"kg":2.3,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0031735":{"kg":2.4000000000000004,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000104":{"kg":2.4,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030104":{"kg":2.4000000000000004,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"000106":{"kg":2.4,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0030162":{"kg":2.4000000000000004,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030275":{"kg":2.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"002005":{"kg":2.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030276":{"kg":2.6,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"002237":{"kg":2.6,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030178":{"kg":2.7,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000277":{"kg":2.8000000000000003,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"002443":{"kg":2.8,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030278":{"kg":2.9000000000000004,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"001117":{"kg":3.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030157":{"kg":3.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000157":{"kg":3.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000279":{"kg":3.1,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0030281":{"kg":3.2,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"000282":{"kg":3.3000000000000003,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0030283":{"kg":3.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0031459":{"kg":3.6,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"001993":{"kg":3.7,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"001322":{"kg":3.8000000000000003,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"001103":{"kg":4.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.5,"p":"400 GR"},"001602":{"kg":4.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"000953":{"kg":2.0,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"002303":{"kg":2.4000000000000004,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"002292":{"kg":3.5,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"400 GR"},"0030773":{"kg":5.0,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"500 GR"},"002295":{"kg":1.4,"pulg":"20","micras":"24","color":"NATURAL","c":0.25,"p":"320 GR"},"002400":{"kg":2.2,"pulg":"20","micras":"30","color":"NATURAL","c":0.25,"p":"320 GR"},"0030277":{"kg":2.8,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030099":{"kg":2.0,"pulg":"20","micras":"18","color":"NEGRO","c":0.25,"p":"320 GR"},"001871":{"kg":1.3,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"000090":{"kg":1.4,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030567":{"kg":14.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"000096":{"kg":2.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030088":{"kg":2.4,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"000088":{"kg":2.4000000000000004,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"000592":{"kg":2.2,"pulg":"20","micras":"50","color":"NATURAL","c":0.25,"p":"320 GR"},"000494":{"kg":0.45,"pulg":"3","micras":"20","color":"NATURAL","c":0.05,"p":"0"},"000051":{"kg":0.5,"pulg":"3","micras":"20","color":"NATURAL","c":0.05,"p":"0"},"000287":{"kg":0.55,"pulg":"3","micras":"20","color":"NATURAL","c":0.05,"p":"0"},"002183":{"kg":2.0,"pulg":"3","micras":"20","color":"NATURAL","c":0.05,"p":"0"},"000383":{"kg":0.5,"pulg":"3","micras":"20","color":"NATURAL","c":0.05,"p":"0"},"000052":{"kg":0.5,"pulg":"6","micras":"12","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"002255":{"kg":0.4,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"000380":{"kg":0.5,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"000054":{"kg":0.6000000000000001,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"000158":{"kg":0.7,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"000288":{"kg":0.75,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"000289":{"kg":0.8,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"000291":{"kg":0.9,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"002346":{"kg":0.6000000000000001,"pulg":"6","micras":"23","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"002309":{"kg":0.45,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"000003":{"kg":1.0,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"5.80 MM"},"0030948":{"kg":0.7,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0300002":{"kg":0.75,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0030295":{"kg":0.8,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"000295":{"kg":0.8,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0030057":{"kg":0.9,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"000058":{"kg":1.0,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0030058":{"kg":1.0,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0031132":{"kg":1.2000000000000002,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"001434":{"kg":1.5,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"000055":{"kg":1.7000000000000002,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0031345":{"kg":2.0,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"000948":{"kg":0.7,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"000496":{"kg":0.8500000000000001,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"001221":{"kg":1.5,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"0031997":{"kg":2.0,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"000304":{"kg":2.0,"pulg":"20","micras":"18","color":"BLANCO","c":0.25,"p":"320 GR"},"0030306":{"kg":1.8,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"001665":{"kg":1.0,"pulg":"14","micras":"20","color":"NATURAL","c":0.25,"p":"0"},"0032592":{"kg":1.3,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0031194":{"kg":1.4,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"001194":{"kg":1.4,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300003":{"kg":1.7000000000000002,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"001642":{"kg":2.9,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0031520":{"kg":3.0,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"002595":{"kg":3.75,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0030673":{"kg":1.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"002154":{"kg":3.3000000000000003,"pulg":"20","micras":"18","color":"NEGRO","c":0.25,"p":"400 GR"},"000673":{"kg":1.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"001084":{"kg":1.5,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"001535":{"kg":1.7000000000000002,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300017":{"kg":2.5,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"000666":{"kg":1.8,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"031305":{"kg":2.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300023":{"kg":1.35,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300031":{"kg":3.5,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"400 GR"},"0300022":{"kg":1.35,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300048":{"kg":5.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"500 GR"},"0300016":{"kg":2.2,"pulg":"20","micras":"30","color":"NATURAL","c":0.25,"p":"320 GR"},"0030308":{"kg":2.3,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300035":{"kg":3.4,"pulg":"18","micras":"17","color":"NATURAL","c":0.25,"p":"400 GR"},"0031766":{"kg":1.5,"pulg":"17.5","micras":"7","color":"NATURAL","c":0.16666666666666666,"p":"2\" X 450 GR"},"0031903":{"kg":1.5,"pulg":"17.5","micras":"7","color":"NATURAL","c":0.16666666666666666,"p":"2\" X 450 GR"},"0032306":{"kg":2.5,"pulg":"17.5","micras":"7","color":"NATURAL","c":0.25,"p":"500 GR"},"002307":{"kg":2.5,"pulg":"17.5","micras":"7","color":"NATURAL","c":0.25,"p":"500 GR"},"001703":{"kg":2.5,"pulg":"18","micras":"10","color":"NATURAL","c":0.25,"p":"500 GR"},"002378":{"kg":2.5,"pulg":"18","micras":"7","color":"NATURAL","c":0.25,"p":"500 GR"},"0031742":{"kg":2.5,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"500 GR"},"0032493":{"kg":2.5,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"500 GR"},"002156":{"kg":8.5,"pulg":"18.5","micras":"7","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030897":{"kg":0.9,"pulg":"12","micras":"9","color":"NATURAL","c":0.25,"p":"T. ALIMENTOS"},"000897":{"kg":0.9,"pulg":"12","micras":"9","color":"NATURAL","c":0.25,"p":"T. ALIMENTOS"},"0030898":{"kg":1.7000000000000002,"pulg":"12","micras":"9","color":"NATURAL","c":0.25,"p":"T. ALIMENTOS"},"000898":{"kg":1.7,"pulg":"12","micras":"9","color":"NATURAL","c":0.25,"p":"T. ALIMENTOS"},"0030184":{"kg":2.4,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"000782":{"kg":0.4,"pulg":"3","micras":"20","color":"NATURAL","c":0.05,"p":"0"},"0031426":{"kg":1.4,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300089":{"kg":2.5,"pulg":"18","micras":"7","color":"NATURAL","c":0.25,"p":"500 GR"},"0300021":{"kg":17.0,"pulg":"20","micras":"30","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300019":{"kg":15.2,"pulg":"20","micras":"18","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300029":{"kg":17.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030202":{"kg":17.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0002724":{"kg":15.2,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300135":{"kg":1.0,"pulg":"10","micras":"20","color":"NEGRO","c":0.25,"p":"12\" X 3.80 MM"},"0300083":{"kg":0.9,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0300039":{"kg":1.8,"pulg":"15","micras":"15","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0030241":{"kg":3.0,"pulg":"18","micras":"17","color":"NATURAL","c":0.25,"p":"320 GR"},"0300059":{"kg":1.4,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0030072":{"kg":2.3,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300082":{"kg":3.0,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300057":{"kg":1.45,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300066":{"kg":1.5,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300064":{"kg":1.5,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300065":{"kg":1.5,"pulg":"18","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0030075":{"kg":1.75,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300013":{"kg":1.75,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030256":{"kg":3.3,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0031774":{"kg":3.7,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300081":{"kg":2.0,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0031907":{"kg":2.6,"pulg":"20","micras":"17","color":"NATURAL","c":0.25,"p":"320 GR"},"0300138":{"kg":1.35,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300058":{"kg":1.4,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300130":{"kg":1.85,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"500 GR"},"0300132":{"kg":2.1,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300129":{"kg":2.3,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300116":{"kg":1.4,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300073":{"kg":1.85,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"500 GR"},"0030101":{"kg":1.9,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300096":{"kg":2.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300076":{"kg":2.35,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030106":{"kg":2.4,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300038":{"kg":2.8,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030097":{"kg":2.85,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030279":{"kg":3.1,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0030282":{"kg":3.3,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0031993":{"kg":3.7,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0031602":{"kg":4.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300141":{"kg":7.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.5,"p":"AUTOMÁTICO"},"0030953":{"kg":2.0,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0030380":{"kg":0.5,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"0030054":{"kg":0.6,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"0300092":{"kg":0.75,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0030296":{"kg":0.9,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0031434":{"kg":1.5,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0031352":{"kg":0.8,"pulg":"9","micras":"25","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0031084":{"kg":1.5,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0031535":{"kg":1.7,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0031085":{"kg":1.5,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0031517":{"kg":2.3,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300085":{"kg":1.0,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"400 GR"},"0300142":{"kg":3.4,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"400 GR"},"0030399":{"kg":2.7,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300143":{"kg":1.45,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030955":{"kg":2.0,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0031910":{"kg":2.2,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300077":{"kg":2.5,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300148":{"kg":4.5,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0300104":{"kg":1.35,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0300149":{"kg":3.1,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"400 GR"},"0300152":{"kg":2.0,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0030304":{"kg":2.0,"pulg":"20","micras":"18","color":"BLANCO","c":0.25,"p":"320 GR"},"0300102":{"kg":1.35,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0300157":{"kg":1.8,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300156":{"kg":4.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300158":{"kg":2.25,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300159":{"kg":2.0,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300160":{"kg":1.4,"pulg":"12","micras":"18","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300162":{"kg":2.3,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300163":{"kg":10.0,"pulg":"18","micras":"9","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030666":{"kg":1.8,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0030997":{"kg":5.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300090":{"kg":1.3,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0030176":{"kg":3.2,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300103":{"kg":1.35,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300167":{"kg":1.8,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300146":{"kg":17.0,"pulg":"20","micras":"28","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300174":{"kg":0.9,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0300118":{"kg":2.1,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300173":{"kg":2.5,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"500 GR"},"0300179":{"kg":4.0,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0300115":{"kg":2.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030466":{"kg":2.0,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300080":{"kg":2.5,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300079":{"kg":2.0,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300184":{"kg":1.4,"pulg":"18","micras":"18","color":"NEGRO","c":0.25,"p":"320 GR"},"0300170":{"kg":2.5,"pulg":"18","micras":"8","color":"NATURAL","c":0.25,"p":"500 GR"},"0300189":{"kg":2.0,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0030227":{"kg":1.4,"pulg":"12","micras":"18","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300197":{"kg":2.4,"pulg":"15","micras":"15","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300051":{"kg":16.0,"pulg":"20","micras":"20","color":"BLANCO","c":1.0,"p":"AUTOMÁTICO"},"0030155":{"kg":1.7,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0300195":{"kg":1.75,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0030468":{"kg":3.3,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300046":{"kg":15.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300198":{"kg":1.8,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0031277":{"kg":1.5,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300199":{"kg":3.0,"pulg":"18","micras":"18","color":"NEGRO","c":0.25,"p":"320 GR"},"0300200":{"kg":2.6,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0030218":{"kg":16.0,"pulg":"20","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300204":{"kg":2.35,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300205":{"kg":1.8,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300177":{"kg":14.0,"pulg":"20","micras":"20","color":"NEGRO","c":1.0,"p":"AUTOMÁTICO"},"0300209":{"kg":1.3,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0300208":{"kg":1.8,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0030796":{"kg":1.8,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0031954":{"kg":1.75,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8 MM"},"0300218":{"kg":1.6,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0030307":{"kg":2.0,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300220":{"kg":15.5,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300027":{"kg":3.4,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300225":{"kg":10.0,"pulg":"18","micras":"10","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300226":{"kg":2.25,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030225":{"kg":2.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300229":{"kg":2.0,"pulg":"18","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0031952":{"kg":2.2,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300235":{"kg":15.4,"pulg":"20","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300240":{"kg":1.3,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300239":{"kg":1.3,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0031649":{"kg":1.5,"pulg":"18","micras":"7","color":"NATURAL","c":0.25,"p":"400 GR"},"0031305":{"kg":1.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.0,"p":"320 GR"},"0300244":{"kg":9.0,"pulg":"20","micras":"20","color":"BLANCO","c":1.0,"p":"AUTOMÁTICO"},"0032077":{"kg":1.5,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"400 GR"},"0030412":{"kg":1.3,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0031336":{"kg":4.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300133":{"kg":21.0,"pulg":"40","micras":"17","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030062":{"kg":1.4,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300246":{"kg":2.1,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300196":{"kg":3.0,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300248":{"kg":2.7,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0300250":{"kg":3.7,"pulg":"20","micras":"22","color":"NATURAL","c":0.25,"p":"400 GR"},"0300251":{"kg":3.0,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0030865":{"kg":1.5,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300252":{"kg":15.7,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300117":{"kg":1.4,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"0031421":{"kg":17.0,"pulg":"20","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030316":{"kg":3.0,"pulg":"18","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300253":{"kg":3.6,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0300255":{"kg":1.8,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"0300257":{"kg":1.6,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300258":{"kg":2.0,"pulg":"12","micras":"18","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300260":{"kg":1.45,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300261":{"kg":1.9,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0031507":{"kg":2.95,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030305":{"kg":3.0,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"0300004":{"kg":1.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300270":{"kg":1.7,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300268":{"kg":20.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300271":{"kg":1.75,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300269":{"kg":3.7,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0300249":{"kg":2.1,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.80 MM"},"0300036":{"kg":1.3,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0300274":{"kg":1.2,"pulg":"18","micras":"1.2","color":"NATURAL","c":0.25,"p":"320 GR"},"0300275":{"kg":1.2,"pulg":"20","micras":"1.2","color":"NATURAL","c":0.25,"p":"320 GR"},"0300265":{"kg":15.0,"pulg":"20","micras":"21","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030967":{"kg":1.8,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300277":{"kg":16.0,"pulg":"20","micras":"20","color":"BLANCO","c":1.0,"p":"AUTOMÁTICO"},"0300280":{"kg":2.0,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":"500 GR"},"0030755":{"kg":8.0,"pulg":"10","micras":"20","color":"NATURAL","c":0.0,"p":"0"},"0300278":{"kg":1.7,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"0300279":{"kg":1.7,"pulg":"18","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300282":{"kg":1.5,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"0300052":{"kg":16.0,"pulg":"20","micras":"20","color":"NEGRO","c":1.0,"p":"AUTOMÁTICO"},"0300245":{"kg":3.7,"pulg":"18","micras":"24","color":"NEGRO","c":0.25,"p":"400 GR"},"0300286":{"kg":2.5,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"500 GR"},"0300288":{"kg":2.2,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300290":{"kg":1.65,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300281":{"kg":1.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300293":{"kg":15.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300273":{"kg":3.7,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"400 GR"},"0031322":{"kg":3.8,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300106":{"kg":3.0,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0030163":{"kg":2.0,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030094":{"kg":16.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300299":{"kg":3.5,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"400 GR"},"0300300":{"kg":3.5,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"400 GR"},"0300301":{"kg":1.9,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300302":{"kg":3.4,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300295":{"kg":17.0,"pulg":"29","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300303":{"kg":1.5,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300305":{"kg":2.2,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300306":{"kg":3.7,"pulg":"18","micras":"24","color":"NEGRO","c":0.25,"p":"400 GR"},"0300307":{"kg":2.0,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300308":{"kg":3.3,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0300088":{"kg":1.3,"pulg":"20","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0031117":{"kg":3.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300243":{"kg":2.7,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0031953":{"kg":3.3,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0300322":{"kg":0.7,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0300321":{"kg":0.9,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0300324":{"kg":0.7,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0300325":{"kg":1.0,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0300323":{"kg":1.3,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"0031103":{"kg":4.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300328":{"kg":1.3,"pulg":"18","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0031460":{"kg":3.6,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0031304":{"kg":1.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.0,"p":"320 GR"},"0300329":{"kg":15.7,"pulg":"20","micras":"17","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300332":{"kg":0.7,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"3.8 MM"},"0030206":{"kg":16.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300330":{"kg":15.7,"pulg":"20","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300331":{"kg":15.7,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300445":{"kg":16.0,"pulg":"20","micras":"16","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300333":{"kg":2.6,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300101":{"kg":1.0,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"400 GR"},"0300291":{"kg":4.0,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0300326":{"kg":4.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"500 GR"},"0030260":{"kg":2.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0032147":{"kg":4.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300344":{"kg":14.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300327":{"kg":1.95,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300334":{"kg":1.2,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300335":{"kg":3.7,"pulg":"20","micras":"22","color":"NEGRO","c":0.25,"p":"400 GR"},"0300336":{"kg":2.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0032126":{"kg":1.4,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030264":{"kg":2.2,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300346":{"kg":2.1,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300020":{"kg":10.0,"pulg":"18","micras":"9","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300347":{"kg":15.7,"pulg":"20","micras":"20","color":"NEGRO","c":1.0,"p":"AUTOMÁTICO"},"0030203":{"kg":18.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0031332":{"kg":3.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030258":{"kg":2.0,"pulg":"18","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0300357":{"kg":3.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0031864":{"kg":3.25,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0031908":{"kg":2.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030266":{"kg":2.9,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0300364":{"kg":1.7,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300365":{"kg":3.3,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"400 GR"},"0300242":{"kg":1.5,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"400 GR"},"0300367":{"kg":2.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0031441":{"kg":5.0,"pulg":"20","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300368":{"kg":2.0,"pulg":"6","micras":"20","color":"NATURAL","c":0.08333333333333333,"p":"3.80 MM"},"0300098":{"kg":3.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0031278":{"kg":2.5,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300372":{"kg":2.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030262":{"kg":3.3,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300285":{"kg":2.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300259":{"kg":16.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300373":{"kg":0.8,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0300374":{"kg":0.8,"pulg":"12","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0030245":{"kg":3.45,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0300378":{"kg":2.0,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0030674":{"kg":2.7,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300379":{"kg":1.4,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300381":{"kg":1.5,"pulg":"17.5","micras":"9","color":"NATURAL","c":0.16666666666666666,"p":"2\" X 450 GR"},"0300385":{"kg":2.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0031562":{"kg":28.0,"pulg":"30","micras":"18","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0031221":{"kg":1.5,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300380":{"kg":16.0,"pulg":"20","micras":"20","color":"NEGRO","c":1.0,"p":"AUTOMÁTICO"},"0300384":{"kg":2.25,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0030235":{"kg":1.5,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0031641":{"kg":1.4,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0031425":{"kg":16.0,"pulg":"20","micras":"18","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0031424":{"kg":3.1,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0300388":{"kg":9.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300387":{"kg":3.0,"pulg":"18","micras":"30","color":"NATURAL","c":0.25,"p":"320 GR"},"0300389":{"kg":13.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030314":{"kg":3.1,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"400 GR"},"0300390":{"kg":1.4,"pulg":"18","micras":"20","color":"ROJO","c":0.25,"p":"320 GR"},"0300433":{"kg":1.0,"pulg":"15","micras":"20","color":"NEGRO","c":0.25,"p":"3.8 MM"},"0300434":{"kg":0.8,"pulg":"9","micras":"20","color":"NEGRO","c":0.125,"p":"3.8 MM"},"0031767":{"kg":3.0,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300447":{"kg":2.9,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300391":{"kg":2.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300392":{"kg":0.9,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0300393":{"kg":8.0,"pulg":"30","micras":"30","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300394":{"kg":3.2,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0300395":{"kg":0.9,"pulg":"9","micras":"20","color":"NEGRO","c":0.125,"p":"3.8 MM"},"0300355":{"kg":2.5,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"500 GR"},"0030039":{"kg":8.0,"pulg":"30","micras":"20","color":"NATURAL","c":1.0,"p":""},"0300397":{"kg":1.4,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0300400":{"kg":2.0,"pulg":"18","micras":"9","color":"NATURAL","c":0.25,"p":"500 GR"},"0300398":{"kg":17.0,"pulg":"20","micras":"14","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300399":{"kg":2.5,"pulg":"17.5","micras":"9","color":"NATURAL","c":0.25,"p":"500 GR"},"0300402":{"kg":2.0,"pulg":"18","micras":"11","color":"NATURAL","c":0.25,"p":"500 GR"},"0030372":{"kg":1.9,"pulg":"18","micras":"22","color":"NATURAL","c":0.25,"p":"320 GR"},"0030041":{"kg":7.5,"pulg":"10","micras":"25","color":"NATURAL","c":0.5,"p":"500 GR"},"0030575":{"kg":1.9,"pulg":"20","micras":"22","color":"NATURAL","c":0.25,"p":"320 GR"},"0030309":{"kg":3.3,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0300404":{"kg":55.0,"pulg":"","micras":"","color":"NEGRO","c":0,"p":"500 GR"},"0030253":{"kg":2.85,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300405":{"kg":1.5,"pulg":"18","micras":"11","color":"NATURAL","c":0.25,"p":"400 GR"},"0032074":{"kg":5.0,"pulg":"20","micras":"18","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300407":{"kg":1.5,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0030518":{"kg":2.7,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300408":{"kg":4.5,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"500 GR"},"0300276":{"kg":1.7,"pulg":"20","micras":"25","color":"NATURAL","c":0.25,"p":"320 GR"},"0031461":{"kg":2.5,"pulg":"12","micras":"18","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300409":{"kg":1.6,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300410":{"kg":1.8,"pulg":"18","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300411":{"kg":3.0,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300412":{"kg":1.9,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0300413":{"kg":2.5,"pulg":"18","micras":"11","color":"NATURAL","c":0.25,"p":"500 GR"},"0300416":{"kg":2.5,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0031718":{"kg":3.9,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0031056":{"kg":2.7,"pulg":"20","micras":"20","color":"BLANCO","c":0.25,"p":"320 GR"},"0031294":{"kg":1.7,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0300419":{"kg":2.1,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.80 MM"},"0300420":{"kg":2.5,"pulg":"18","micras":"22","color":"NATURAL","c":0.25,"p":"320 GR"},"0300422":{"kg":1.0,"pulg":"18","micras":"20","color":"NATURAL","c":0.0,"p":"320 GR"},"0032004":{"kg":1.0,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0031865":{"kg":3.45,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0030444":{"kg":2.6,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0030190":{"kg":10.0,"pulg":"20","micras":"15","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300427":{"kg":2.5,"pulg":"18","micras":"7","color":"NATURAL","c":0.25,"p":"500 GR"},"0300428":{"kg":2.3,"pulg":"20","micras":"17","color":"NATURAL","c":0.25,"p":"320 GR"},"0300363":{"kg":3.5,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"400 GR"},"0032009":{"kg":1.6,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8MM"},"0300435":{"kg":2.9,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300436":{"kg":2.4,"pulg":"20","micras":"22","color":"NATURAL","c":0.25,"p":"320 GR"},"0300069":{"kg":1.35,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0030299":{"kg":1.9,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0300292":{"kg":1.9,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300439":{"kg":1.6,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300438":{"kg":4.6,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"500 GR"},"0300431":{"kg":55.0,"pulg":"","micras":"","color":"BLANCO","c":0,"p":""},"0300441":{"kg":4.2,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0030259":{"kg":3.0,"pulg":"18","micras":"30","color":"NATURAL","c":0.25,"p":"320 GR"},"0030089":{"kg":1.4,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300107":{"kg":3.0,"pulg":"20","micras":"20","color":"VERDE","c":0.25,"p":"320 GR"},"0030454":{"kg":2.0,"pulg":"20","micras":"25","color":"NATURAL","c":0.25,"p":"320 GR"},"0300444":{"kg":1.0,"pulg":"12","micras":"18","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0300448":{"kg":2.0,"pulg":"18","micras":"22","color":"NATURAL","c":0.25,"p":"320 GR"},"0300449":{"kg":2.9,"pulg":"20","micras":"22","color":"NATURAL","c":0.25,"p":"320 GR"},"0300214":{"kg":39.68,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0031593":{"kg":2.5,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"5.8MM"},"0300450":{"kg":20.0,"pulg":"20","micras":"20","color":"BLANCO","c":1.0,"p":"AUTOMÁTICO"},"0300451":{"kg":1.5,"pulg":"20","micras":"18","color":"NATURAL","c":0.25,"p":"320 GR"},"0030198":{"kg":16.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300452":{"kg":5.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300453":{"kg":4.6,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"500 GR"},"0300457":{"kg":8.0,"pulg":"10","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300458":{"kg":17.0,"pulg":"20","micras":"20","color":"VERDE","c":1.0,"p":"AUTOMÁTICO"},"0300459":{"kg":17.0,"pulg":"20","micras":"16","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030159":{"kg":17.0,"pulg":"20","micras":"21","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300460":{"kg":1.3,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300461":{"kg":1.5,"pulg":"20","micras":"23","color":"NATURAL","c":0.25,"p":"320 GR"},"0300463":{"kg":4.6,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"500 GR"},"0300464":{"kg":1.3,"pulg":"20","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300462":{"kg":1.7,"pulg":"15","micras":"8","color":"NATURAL","c":0.25,"p":"5.8MM"},"0300466":{"kg":1.3,"pulg":"18","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0300467":{"kg":0.9,"pulg":"15","micras":"20","color":"NATURAL","c":0.25,"p":"3.8 MM"},"0031914":{"kg":5.0,"pulg":"20","micras":"17","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0030055":{"kg":1.7,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0030398":{"kg":2.2,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"320 GR"},"0031912":{"kg":5.0,"pulg":"20","micras":"20","color":"BLANCO","c":1.0,"p":"AUTOMÁTICO"},"0031777":{"kg":2.4,"pulg":"20","micras":"17","color":"NATURAL","c":0.25,"p":"320 GR"},"0030311":{"kg":3.0,"pulg":"18","micras":"17","color":"ROJO","c":0.25,"p":"320 GR"},"0300470":{"kg":14.0,"pulg":"20","micras":"20","color":"BLANCO","c":1.0,"p":"AUTOMÁTICO"},"0300471":{"kg":3.0,"pulg":"18","micras":"15","color":"NATURAL","c":0.25,"p":"320 GR"},"0300472":{"kg":2.5,"pulg":"18","micras":"7","color":"NATURAL","c":0.25,"p":"500 GR"},"0300474":{"kg":2.0,"pulg":"20","micras":"17","color":"NATURAL","c":0.25,"p":"320 GR"},"0300475":{"kg":2.5,"pulg":"18","micras":"8","color":"NATURAL","c":0.25,"p":"500 GR"},"0030187":{"kg":8.0,"pulg":"10","micras":"23","color":"NATURAL","c":0.5,"p":"500 GR"},"0300480":{"kg":3.6,"pulg":"18","micras":"18","color":"NATURAL","c":0.25,"p":"400 GR"},"0300481":{"kg":2.5,"pulg":"20","micras":"30","color":"NATURAL","c":0.25,"p":"320 GR"},"0300482":{"kg":5.0,"pulg":"20","micras":"16","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0031173":{"kg":4.3,"pulg":"20","micras":"20","color":"NATURAL","c":0.25,"p":"400 GR"},"0300484":{"kg":5.0,"pulg":"20","micras":"30","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300485":{"kg":7.5,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300487":{"kg":15.0,"pulg":"20","micras":"23","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300486":{"kg":17.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300488":{"kg":2.4,"pulg":"18","micras":"8","color":"NATURAL","c":0.25,"p":"500 GR"},"0300483":{"kg":2.5,"pulg":"18","micras":"7","color":"NATURAL","c":0.25,"p":"500 GR"},"0031642":{"kg":2.9,"pulg":"20","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300492":{"kg":3.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300491":{"kg":16.0,"pulg":"20","micras":"20","color":"NATURAL","c":1.0,"p":"AUTOMÁTICO"},"0300494":{"kg":2.8,"pulg":"18","micras":"20","color":"NEGRO","c":0.25,"p":"320 GR"},"0300498":{"kg":5.0,"pulg":"18","micras":"11","color":"NATURAL","c":0.25,"p":"500 GR"},"0300502":{"kg":18.0,"pulg":"18","micras":"25","color":"NATURAL","c":0.5,"p":"500 GR"},"0300495":{"kg":1.0,"pulg":"9","micras":"20","color":"NATURAL","c":0.125,"p":"5.8 MM"},"0002476":{"kg":35.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0002477":{"kg":35.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0002478":{"kg":35.0,"pulg":"15","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000019":{"kg":28.0,"pulg":"12","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000016":{"kg":21.0,"pulg":"9","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000014":{"kg":35.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000020":{"kg":35.0,"pulg":"18","micras":"15","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000005":{"kg":35.0,"pulg":"18","micras":"18","color":"NATURAL","c":0,"p":"Bob.Madre"},"0002620":{"kg":35.0,"pulg":"20","micras":"18","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000036":{"kg":35.0,"pulg":"20","micras":"30","color":"NATURAL","c":0,"p":"Bob.Madre"},"0002485":{"kg":35.0,"pulg":"20","micras":"15","color":"NATURAL","c":0,"p":"Bob.Madre"},"0002479":{"kg":35.0,"pulg":"20","micras":"23","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000002":{"kg":35.0,"pulg":"18","micras":"23","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000018":{"kg":35.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000023":{"kg":35.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000033":{"kg":35.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000004":{"kg":35.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000006":{"kg":35.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000025":{"kg":35.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000026":{"kg":35.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000060":{"kg":36.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000061":{"kg":36.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000062":{"kg":36.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000063":{"kg":28.0,"pulg":"12","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000064":{"kg":36.0,"pulg":"18","micras":"30","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000066":{"kg":36.0,"pulg":"15","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000070":{"kg":36.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000071":{"kg":36.0,"pulg":"20","micras":"22","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000067":{"kg":36.0,"pulg":"52","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000072":{"kg":35.0,"pulg":"51","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000073":{"kg":36.0,"pulg":"50","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000078":{"kg":15.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000058":{"kg":35.0,"pulg":"20","micras":"25","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000079":{"kg":35.0,"pulg":"18","micras":"24","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000080":{"kg":35.0,"pulg":"18","micras":"24","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000081":{"kg":17.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000082":{"kg":36.0,"pulg":"18","micras":"17","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000083":{"kg":33.5,"pulg":"18","micras":"24","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000084":{"kg":35.0,"pulg":"51","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000085":{"kg":36.5,"pulg":"20","micras":"23","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000086":{"kg":21.0,"pulg":"9","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000087":{"kg":36.0,"pulg":"18","micras":"15","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000088":{"kg":33.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000089":{"kg":33.5,"pulg":"20","micras":"30","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000090":{"kg":30.5,"pulg":"20","micras":"25","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000091":{"kg":33.5,"pulg":"18","micras":"24","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000035":{"kg":35.0,"pulg":"20","micras":"17","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000092":{"kg":35.0,"pulg":"18","micras":"22","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000093":{"kg":36.5,"pulg":"18","micras":"18","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000094":{"kg":36.0,"pulg":"18","micras":"18","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000095":{"kg":33.0,"pulg":"20","micras":"23","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000096":{"kg":31.5,"pulg":"51","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000099":{"kg":22.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000100":{"kg":25.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000101":{"kg":20.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000102":{"kg":21.0,"pulg":"51","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000103":{"kg":21.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"AUTOMÁTICO"},"0000104":{"kg":25.0,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000105":{"kg":33.5,"pulg":"15","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000106":{"kg":34.5,"pulg":"18","micras":"17","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000107":{"kg":36.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000108":{"kg":34.5,"pulg":"18","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000109":{"kg":35.5,"pulg":"18","micras":"25","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000110":{"kg":36.5,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000111":{"kg":36.0,"pulg":"20","micras":"18","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000112":{"kg":24.5,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"AUTOMÁTICO"},"0000113":{"kg":29.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0000114":{"kg":30.0,"pulg":"20","micras":"20","color":"NATURAL","c":0,"p":"Bob.Madre"},"0030573":{"kg":21.25,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030182":{"kg":15.6,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000116":{"kg":19.200000000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000896":{"kg":0.108,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"001548":{"kg":0.0034800000000000013,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002228":{"kg":0.13349,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"00229":{"kg":0.13997,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002297":{"kg":0.18659000000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002298":{"kg":0.19937000000000005,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002223":{"kg":0.10109,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002299":{"kg":0.21215000000000006,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002224":{"kg":0.10757,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002300":{"kg":0.22493000000000007,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002225":{"kg":0.11405,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002301":{"kg":0.23771,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002226":{"kg":0.12053,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002302":{"kg":0.25049000000000005,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002227":{"kg":0.12701,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"001586":{"kg":6.21,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300499":{"kg":4.5,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300216":{"kg":7.2,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300500":{"kg":10.8,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002342":{"kg":0.09397000000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000339":{"kg":5.0,"pulg":"","micras":"","color":"AZUL","c":0,"p":""},"0030118":{"kg":3.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000118":{"kg":3.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000352":{"kg":1.8,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000348":{"kg":2.1,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000354":{"kg":2.4000000000000004,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000355":{"kg":2.7,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000357":{"kg":3.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000358":{"kg":3.3000000000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000359":{"kg":3.6,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000360":{"kg":3.9000000000000004,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000361":{"kg":4.2,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000362":{"kg":4.5,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030346":{"kg":6.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000346":{"kg":6.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030347":{"kg":9.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000347":{"kg":0.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002408":{"kg":1.3170600000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"001717":{"kg":3.4800000000000004,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002328":{"kg":0.7748000000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002254":{"kg":8.927720000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030166":{"kg":0.09000000000000001,"pulg":"","micras":"","color":"NATURAL","c":20.0,"p":""},"000166":{"kg":0.09,"pulg":"","micras":"","color":"NATURAL","c":20.0,"p":""},"0030167":{"kg":0.9,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"000168":{"kg":0.6000000000000001,"pulg":"","micras":"","color":"NATURAL","c":4.0,"p":""},"0030168":{"kg":0.6,"pulg":"","micras":"","color":"NATURAL","c":4.0,"p":""},"0300124":{"kg":8.55,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300122":{"kg":2.85,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300123":{"kg":5.7,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300203":{"kg":0.045,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300050":{"kg":1.6,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300343":{"kg":1.2,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300044":{"kg":1.16,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300042":{"kg":1.03,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300201":{"kg":0.143,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300309":{"kg":1.5728,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300202":{"kg":0.09,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300054":{"kg":1.36,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300056":{"kg":1.5,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300045":{"kg":1.35,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030354":{"kg":2.4,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030358":{"kg":3.3,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030361":{"kg":4.2,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030355":{"kg":2.7,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030359":{"kg":3.6,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030116":{"kg":19.2,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300314":{"kg":1.525,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030362":{"kg":4.5,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030363":{"kg":4.8,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"300264":{"kg":0,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300211":{"kg":25.0,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300053":{"kg":50.0,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030369":{"kg":12.0,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300352":{"kg":5.4,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300353":{"kg":7.2,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300354":{"kg":8.1,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030348":{"kg":2.1,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030352":{"kg":2.1,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030360":{"kg":3.9,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300068":{"kg":4.8,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300234":{"kg":7.2,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300371":{"kg":2.4,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0028304":{"kg":0.24,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300375":{"kg":2.1875,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300377":{"kg":10.0,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"030022":{"kg":4.5,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0000065":{"kg":6.944,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030357":{"kg":3.0,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0030350":{"kg":1.5,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300406":{"kg":6.45,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0000074":{"kg":5.4,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300423":{"kg":0.03,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300437":{"kg":19.2,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300440":{"kg":1.56,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300443":{"kg":21.25,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300476":{"kg":0.85,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030345":{"kg":4.8,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300493":{"kg":0.12,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300030":{"kg":17.2,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300503":{"kg":1.388,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300507":{"kg":2.1,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300508":{"kg":4.2,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0000011":{"kg":3.6,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000012":{"kg":7.2,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000077":{"kg":52.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000038":{"kg":10.26,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0002480":{"kg":10.8,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0002481":{"kg":14.4,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000046":{"kg":24.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300028":{"kg":10.08,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000059":{"kg":7.2,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000048":{"kg":10.44,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300297":{"kg":35.5,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000013":{"kg":6.84,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300310":{"kg":10.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300182":{"kg":12.24,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300345":{"kg":50.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030131":{"kg":5.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000068":{"kg":9.72,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000069":{"kg":11.84,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000075":{"kg":9.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0000076":{"kg":18.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300469":{"kg":2.13,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300504":{"kg":9.12,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"300357":{"kg":10.08,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"300358":{"kg":1.5435,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000111":{"kg":14.4,"pulg":"","micras":"","color":"AZUL","c":0,"p":""},"0031478":{"kg":24.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000113":{"kg":24.0,"pulg":"","micras":"","color":"AZUL","c":0,"p":""},"001478":{"kg":24.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002372":{"kg":15.867000000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002426":{"kg":1.3230000000000004,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002275":{"kg":13.5,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002425":{"kg":7.722000000000001,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030113":{"kg":24.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300186":{"kg":28.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030804":{"kg":24.75,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030364":{"kg":12.096,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"0300155":{"kg":79.35,"pulg":"","micras":"","color":"NATURAL","c":79.35,"p":""},"0030806":{"kg":14.4,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"0031868":{"kg":8.664,"pulg":"","micras":"","color":"NATURAL","c":0.4,"p":""},"0300136":{"kg":19.584,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"0030320":{"kg":12.654,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"0030321":{"kg":0.5625,"pulg":"","micras":"","color":"NATURAL","c":1.0,"p":""},"0300311":{"kg":18.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300154":{"kg":38.4,"pulg":"","micras":"","color":"NATURAL","c":38.4,"p":""},"0300153":{"kg":21.6,"pulg":"","micras":"","color":"NATURAL","c":21.6,"p":""},"0300256":{"kg":6.48,"pulg":"","micras":"","color":"NATURAL","c":0.4,"p":""},"0300262":{"kg":11.83,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"0030331":{"kg":6.48,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"0030325":{"kg":12.312,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"002344":{"kg":18.0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002327":{"kg":0.663,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000794":{"kg":1.8,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000750":{"kg":1.0080000000000002,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000809":{"kg":2.8800000000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"002326":{"kg":3.6,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000320":{"kg":12.654000000000003,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"0030365":{"kg":14.4,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"001866":{"kg":20.700000000000003,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"000331":{"kg":10.44,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"001867":{"kg":36.720000000000006,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030332":{"kg":13.224,"pulg":"","micras":"","color":"NATURAL","c":0.25,"p":""},"0300359":{"kg":4.77,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300360":{"kg":7.56,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300361":{"kg":11.34,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300210":{"kg":0.032,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300424":{"kg":16.2,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300176":{"kg":0,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300425":{"kg":24.09,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300477":{"kg":6.24,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300478":{"kg":10.416,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300490":{"kg":3.75,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0030045":{"kg":24.09,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""},"0300496":{"kg":11.83,"pulg":"","micras":"","color":"NATURAL","c":0,"p":""}};
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let opsGS    = JSON.parse(localStorage.getItem('reb5_gs_ops')||'[]');
+let registros= JSON.parse(localStorage.getItem('reb5_regs')||'[]');
+let asistentes=JSON.parse(localStorage.getItem('reb5_asist')||'["Frank Puma Ccallo","Mauricio Ávila"]');
+let sesion   = null;
+
+/* ══════════════════════════════════════════
+   RELOJ
+══════════════════════════════════════════ */
+function pad(n){return String(n).padStart(2,'0');}
+function hhmm(d){d=d||new Date();return pad(d.getHours())+':'+pad(d.getMinutes());}
+function hhmmss(d){d=d||new Date();return hhmm(d)+':'+pad(d.getSeconds());}
+function ddmmyyyy(d){d=d||new Date();return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();}
+function mesNombre(d){
+  d=d||new Date();
+  return ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+          'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][d.getMonth()];
+}
+function turnoAuto(d){
+  d=d||new Date();
+  const h=d.getHours();
+  return (h>=7&&h<19)?'DIA':'NOCHE';
+}
+function diffHoras(ini,fin){
+  if(!ini||!fin) return '';
+  const [hi,mi]=ini.split(':').map(Number);
+  const [hf,mf]=fin.split(':').map(Number);
+  let diff=(hf*60+mf)-(hi*60+mi);
+  if(diff<0) diff+=1440;
+  return (diff/60).toFixed(2);
+}
+
+function tickClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=hhmmss(n);
+  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const mes=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('fecha-txt').textContent=
+    dias[n.getDay()]+' '+n.getDate()+' '+mes[n.getMonth()]+' '+n.getFullYear();
+}
+setInterval(tickClock,1000); tickClock();
+
+/* ══════════════════════════════════════════
+   TABS
+══════════════════════════════════════════ */
+function goTab(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  const pg='pg-'+el.dataset.pg;
+  document.getElementById(pg).classList.add('on');
+  if(el.dataset.pg==='hist')   renderHist();
+  if(el.dataset.pg==='avance') renderAvance();
+  if(el.dataset.pg==='mermas') renderMermas();
+  if(el.dataset.pg==='pers')   renderPers();
+  if(el.dataset.pg==='config') renderConfig();
+}
+
+/* ══════════════════════════════════════════
+   GOOGLE SHEETS — CARGAR OPs MPS
+══════════════════════════════════════════ */
+function parseCsv(line){
+  const r=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+    else if(c===','&&!inQ){r.push(cur.trim());cur='';}
+    else cur+=c;
+  }
+  r.push(cur.trim());
+  return r;
+}
+
+function cargarMPS(manual){
+  setGS('load', manual?'Actualizando OPs...':'Cargando OPs del MPS...');
+  const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTvvkaJowutisF8bIVKtwU8dtlLCXElFKVLG3u4F_2A9jbWhVSZPlk2SYFwAPnONVwvFiHcvR1aq-8S/pub?gid=1003436557&single=true&output=csv';
+  fetch(CSV_URL)
+    .then(r=>r.text())
+    .then(csv=>{
+      const ops=parsearCSVops(csv);
+      if(!ops.length) throw new Error('0 OPs');
+      OPS_LOCAL=ops;
+      localStorage.setItem('reb5_ops_cache',JSON.stringify(OPS_LOCAL));
+      localStorage.setItem('reb5_ops_ts',Date.now());
+      setGS('ok',OPS_LOCAL.length+' OPs cargadas del MPS — última: '+OPS_LOCAL[OPS_LOCAL.length-1].op);
+      if(manual) toast('✔ '+OPS_LOCAL.length+' OPs actualizadas','ok');
+    })
+    .catch(()=>{
+      // Fallback JSONP
+      window._mpsCallback=function(data){
+        const tag=document.getElementById('_jsonp_tag');
+        if(tag) tag.remove();
+        if(data&&data.ops&&data.ops.length){
+          OPS_LOCAL=data.ops;
+          localStorage.setItem('reb5_ops_cache',JSON.stringify(OPS_LOCAL));
+          localStorage.setItem('reb5_ops_ts',Date.now());
+          setGS('ok',OPS_LOCAL.length+' OPs cargadas — última: '+OPS_LOCAL[OPS_LOCAL.length-1].op);
+          if(manual) toast('✔ '+OPS_LOCAL.length+' OPs actualizadas','ok');
+        } else { usarCache(); }
+      };
+      const s=document.createElement('script');
+      s.id='_jsonp_tag';
+      s.src=GS_SCRIPT+'?action=getOps&callback=_mpsCallback';
+      s.onerror=function(){s.remove();usarCache();};
+      document.head.appendChild(s);
+      setTimeout(function(){
+        if(document.getElementById('_jsonp_tag')){
+          document.getElementById('_jsonp_tag').remove();
+          usarCache();
+        }
+      },8000);
+    });
+}
+
+function cargarBOMLive(){
+  window._bomCallback = function(data){
+    const tag = document.getElementById('_bom_jsonp');
+    if(tag) tag.remove();
+    if(data && typeof data === 'object' && !data.error){
+      const keys = Object.keys(data).length;
+      if(keys > 0){
+        window.BOM_DATA_LIVE = data;
+        localStorage.setItem('reb5_bom_cache', JSON.stringify(data));
+        localStorage.setItem('reb5_bom_ts', Date.now());
+        console.log('BOM en vivo cargado:', keys, 'códigos');
+      }
+    }
+  };
+  const s = document.createElement('script');
+  s.id = '_bom_jsonp';
+  s.src = GS_SCRIPT + '?action=getBOM&callback=_bomCallback';
+  s.onerror = function(){ s.remove(); };
+  document.head.appendChild(s);
+}
+
+function cargarBaseDatos(){
+  window._bdCallback = function(data){
+    const tag = document.getElementById('_bd_jsonp');
+    if(tag) tag.remove();
+    if(data && data.maquinas && data.maquinas.length){
+      maquinas = data.maquinas;
+      localStorage.setItem('reb5_maquinas', JSON.stringify(maquinas));
+    }
+    if(data && data.supervisores && data.supervisores.length){
+      asistentes = data.supervisores;
+      localStorage.setItem('reb5_asist', JSON.stringify(asistentes));
+    }
+    if(data && data.personal && data.personal.length){
+      window._personalDB = data.personal; // [{dni, nombre}]
+      localStorage.setItem('reb5_personal', JSON.stringify(data.personal));
+    }
+    renderConfig();
+    renderAsistentes();
+    renderMaqSelect();
+    renderOperSelect();
+  };
+  const s = document.createElement('script');
+  s.id = '_bd_jsonp';
+  s.src = GS_SCRIPT + '?action=getBaseDatos&callback=_bdCallback';
+  s.onerror = function(){ s.remove(); };
+  document.head.appendChild(s);
+}
+
+function onDNIChange(dni){
+  const nombre = buscarPorDNI(dni);
+  const disp = document.getElementById('f-maqsta-nombre');
+  const hid  = document.getElementById('f-maqsta');
+  if(nombre){
+    disp.textContent = '✔ ' + nombre;
+    disp.style.color = 'var(--teal)';
+    hid.value = nombre;
+  } else if(dni.trim().length >= 6){
+    disp.textContent = '⚠ DNI no encontrado en BASE DE DATO';
+    disp.style.color = 'var(--warn)';
+    hid.value = '';
+  } else {
+    disp.textContent = '';
+    hid.value = '';
+  }
+}
+
+function buscarPorDNI(dni){
+  const personal = window._personalDB ||
+    JSON.parse(localStorage.getItem('reb5_personal')||'[]');
+  const found = personal.find(p => p.dni === String(dni).trim());
+  return found ? found.nombre : '';
+}
+
+function parsearCSVops(csv){
+  const lines=csv.split('\n').filter(l=>l.trim());
+  let hRow=6,cOP=4,cPed=6,cCli=7,cCod=8,cDesc=9,cRol=10,cCaj=11,cTuc=12;
+  for(let i=0;i<Math.min(lines.length,15);i++){
+    const c=parseCsv(lines[i]);
+    for(let j=0;j<c.length;j++){
+      if(c[j].trim().toUpperCase()==='OP'){hRow=i;cOP=j;break;}
+    }
+    if(hRow!==6) break;
+  }
+  const ops=[],seen=new Set();
+  for(let i=hRow+1;i<lines.length;i++){
+    const c=parseCsv(lines[i]);
+    const op=(c[cOP]||'').trim();
+    if(!op||!/^\d{5,6}$/.test(op)||seen.has(op)) continue;
+    seen.add(op);
+    const desc=(c[cDesc]||'').trim();
+    const m=desc.match(/X\s*([\d.]+)\s*KG/i);
+    ops.push({op,
+      pedido:(c[cPed]||'').trim(),cliente:(c[cCli]||'').trim(),
+      codigo:(c[cCod]||'').trim(),desc,
+      rol:parseInt(c[cRol])||0,caj:parseInt(c[cCaj])||0,
+      tuco:(c[cTuc]||'').trim(),kgr:m?parseFloat(m[1]):0});
+  }
+  return ops;
+}
+
+
+function usarCache(){
+  const cached = JSON.parse(localStorage.getItem('reb5_ops_cache') || '[]');
+  const ts     = parseInt(localStorage.getItem('reb5_ops_ts') || '0');
+  const mins   = Math.round((Date.now() - ts) / 60000);
+  if(cached.length > 0){
+    OPS_LOCAL = cached;
+    setGS('ok', OPS_LOCAL.length + ' OPs (caché ' + (mins < 60 ? mins+'m' : Math.round(mins/60)+'h') + ') — presiona 🔄 para actualizar');
+  } else {
+    setGS('err', 'Sin OPs — presiona 🔄 para conectar al MPS');
+  }
+}
+
+
+function setGS(tipo,msg){
+  const dot=document.getElementById('gs-dot');
+  const txt=document.getElementById('gs-msg');
+  dot.className='gs-dot'+(tipo?' '+tipo:'');
+  txt.textContent=msg;
+  txt.style.color=tipo==='ok'?'var(--teal)':tipo==='err'?'var(--red)':'var(--mut2)';
+}
+
+/* ══════════════════════════════════════════
+   BUSCAR OP
+══════════════════════════════════════════ */
+function todosOps(){
+  return OPS_LOCAL;
+}
+
+function buscarOP(q){
+  const dd=document.getElementById('op-dd');
+  const qt=q.trim();
+  if(qt.length<2){dd.classList.remove('on');return;}
+  const all=todosOps();
+  const res=all.filter(o=>
+    o.op.startsWith(qt)||
+    (o.pedido&&o.pedido.includes(qt))||
+    o.desc.toUpperCase().includes(qt.toUpperCase())
+  ).slice(0,12);
+  if(!res.length){
+    dd.innerHTML='<div class="no-op">No encontrado en el MPS</div>';
+    dd.classList.add('on');return;
+  }
+  dd.innerHTML=res.map((o,i)=>`
+    <div class="oi" onmousedown="selOP(${i},event)">
+      <div class="oi-top">OP ${o.op} &nbsp;|&nbsp; Pedido ${o.pedido||'—'}</div>
+      <div class="oi-sub">${o.cliente||''} — ${o.desc||''}</div>
+    </div>`).join('');
+  // Guardar en window para acceso por índice
+  window._opRes=res;
+  dd.classList.add('on');
+}
+
+function selOP(i,ev){
+  if(ev) ev.preventDefault();
+  const o=window._opRes[i]; if(!o) return;
+
+  // BOM lookup PRIMERO — prioridad: BOM en vivo del Sheet > BOM embebido viejo
+  const _cod2 = o.codigo||'';
+  const bomE = bomLookup(_cod2);
+
+  // Extraer PULG de descripción como fallback
+  const desc = o.desc||'';
+  const mPulg = desc.match(/(\d+[\d."]*)\s*PULG/i);
+  const mMicr = desc.match(/(\d+[\d.]*)\s*MICR/i);
+  const mKgr  = desc.match(/X\s*([\d.]+)\s*KG/i);
+  const pulg  = (bomE && bomE.pulg) ? bomE.pulg : (mPulg ? mPulg[1] : '');
+  const kgr   = bomE ? (bomE.kg || (mKgr?parseFloat(mKgr[1]):0)) : (mKgr?parseFloat(mKgr[1]):0);
+  const cajxund = bomE ? (bomE.c||0) : 0;
+  const pesoTucoVal = (bomE && bomE.p && bomE.p!=='AUTOMÁTICO') ? bomE.p : (o.tuco||'');
+  const colorVal = (bomE && bomE.color) ? bomE.color : 'NATURAL';
+
+  // Guardar globales
+  window._kgrActual    = kgr;
+  window._cajxund      = cajxund;
+  window._pulgActual   = pulg;
+  window._colorActual  = colorVal;
+  window._pesoTucoActual = pesoTucoVal;
+  window._rolActual    = parseInt(o.rol||o.rollos)||0;
+
+  // Hidden fields
+  const rol = parseInt(o.rol||o.rollos)||0;
+  const kgt = (rol*kgr).toFixed(2);
+  document.getElementById('f-op').value    = o.op;
+  document.getElementById('h-ped').value   = o.pedido||'';
+  document.getElementById('h-cli').value   = o.cliente||'';
+  document.getElementById('h-cod').value   = _cod2;
+  document.getElementById('h-desc').value  = desc;
+  document.getElementById('h-rol').value   = rol;
+  document.getElementById('h-caj').value   = (o.caj||o.cajas||0);
+  document.getElementById('h-tuc').value   = o.tuco||'';
+  document.getElementById('h-kgr').value   = kgr;
+  document.getElementById('h-kgt').value   = kgt;
+  document.getElementById('h-lote').value  = '';
+
+  // Panel info del pedido
+  document.getElementById('pi-ped').textContent  = o.pedido||'—';
+  document.getElementById('pi-cli').textContent  = (o.cliente||'—').substring(0,30);
+  document.getElementById('pi-cod').textContent  = _cod2||'—';
+  document.getElementById('pi-rol').textContent  = rol||'—';
+  document.getElementById('pi-caj').textContent  = (o.caj||o.cajas)||'—';
+  document.getElementById('pi-tuc').textContent  = pulg ? pulg+' PULG' : (o.tuco||'—');
+  document.getElementById('pi-desc').textContent = desc.substring(0,70)||'—';
+  document.getElementById('pi-kgr').textContent  = kgr ? kgr+' KG/rollo' : '—';
+  document.getElementById('pi-kgt').textContent  = kgt ? kgt+' KG total' : '—';
+  document.getElementById('op-panel').classList.add('on');
+
+  // Autocompletar campo peso tuco
+  const fPesoT = document.getElementById('f-peso-tuco');
+  if(fPesoT) fPesoT.value = pesoTucoVal;
+
+  // Color oculto + mostrar en campo bobina (readonly)
+  const fColor = document.getElementById('f-color');
+  if(fColor) fColor.value = colorVal;
+  const fBobinaDisp = document.getElementById('f-bobina');
+  if(fBobinaDisp) fBobinaDisp.value = bomE ? colorVal : '—';
+
+  document.getElementById('op-dd').classList.remove('on');
+  console.log('DEBUG selOP:', {
+    codigo: _cod2,
+    bomEncontrado: !!bomE,
+    bomE: bomE,
+    pulg: pulg,
+    kgr: kgr,
+    cajxund: cajxund,
+    bomFuente: window.BOM_DATA_LIVE ? 'EN VIVO ('+Object.keys(window.BOM_DATA_LIVE).length+' codigos)' : 'embebido viejo'
+  });
+  toast('✔ OP '+o.op+' — '+pulg+' PULG — '+kgr+' KG/rollo','ok');
+}
+
+
+/* ══════════════════════════════════════════
+   RECALC KPIs parada
+══════════════════════════════════════════ */
+function bomLookup(codigo){
+  const bomSrc = window.BOM_DATA_LIVE || (typeof BOM_DATA!=='undefined' ? BOM_DATA : null);
+  if(!bomSrc || !codigo) return null;
+  const cod = String(codigo).trim();
+  // Probar: tal cual, sin ceros izq, con un cero, con dos ceros, como número
+  const variantes = [
+    cod,
+    cod.replace(/^0+/,''),
+    '0'+cod.replace(/^0+/,''),
+    '00'+cod.replace(/^0+/,''),
+    String(parseInt(cod,10))
+  ];
+  for(const v of variantes){
+    if(bomSrc[v]) return bomSrc[v];
+  }
+  // Última opción: buscar por coincidencia ignorando ceros izquierda en las KEYS del BOM
+  const codNum = cod.replace(/^0+/,'');
+  for(const k in bomSrc){
+    if(k.replace(/^0+/,'') === codNum) return bomSrc[k];
+  }
+  return null;
+}
+
+function recalc(){
+  const prod=parseFloat(document.getElementById('f-prod').value)||0;
+  const ant =parseFloat(document.getElementById('f-ant').value)||0;
+  // KGR: global > sesion > hidden field > descripcion
+  let kgr = window._kgrActual || (sesion?sesion.kgr:0) ||
+            parseFloat(document.getElementById('h-kgr').value)||0;
+  if(!kgr){
+    const desc = (sesion&&sesion.desc)||document.getElementById('h-desc').value||'';
+    const m = desc.match(/X\s*([\d.]+)\s*KG/i);
+    if(m) kgr = parseFloat(m[1]);
+  }
+  const rol = window._rolActual || (sesion?sesion.rol:0) ||
+              parseFloat(document.getElementById('h-rol').value)||0;
+  const kg  =(prod*kgr).toFixed(2);
+  const pct =rol>0?Math.round(((prod+ant)/rol)*100):0;
+  const pend=Math.max(0,rol-prod-ant);
+  // Auto-calcular cajas SOLO si hay cajxund en el BOM (si no, queda manual)
+  const cajField=document.getElementById('f-cajas-prod');
+  const cxu = window._cajxund || (sesion?sesion.cajxund:0) || 0;
+  if(cajField && prod>0 && cxu>0){
+    cajField.value = Math.round(prod*cxu);
+  } else if(cajField && prod===0){
+    cajField.value = '';
+  }
+  document.getElementById('k-rol').textContent=prod;
+  document.getElementById('k-kg').textContent =kg;
+  document.getElementById('k-pct').textContent=pct+'%';
+  const est=document.getElementById('k-est');
+  const box=document.getElementById('k-estbox');
+  if(!prod){est.textContent='—';est.style.color='var(--mut)';box.style.borderColor='';}
+  else if(pend<=0){est.textContent='COMPLETO';est.style.color='var(--green)';box.style.borderColor='var(--green)';}
+  else{est.textContent='PENDIENTE';est.style.color='var(--warn)';box.style.borderColor='var(--warn)';}
+}
+
+/* ══════════════════════════════════════════
+   INICIAR
+══════════════════════════════════════════ */
+function iniciar(){
+  try {
+  const maq =document.getElementById('f-maq').value;
+  const asist=document.getElementById('f-asist').value;
+  const mqsta=document.getElementById('f-maqsta').value;
+  const op  =document.getElementById('f-op').value.trim();
+  if(!asist){toast('Selecciona el asistente','warn');return;}
+  if(!maq)  {toast('Selecciona la máquina','warn');return;}
+  if(!op)   {toast('Ingresa el N° de OP','warn');return;}
+
+  const now=new Date();
+  const turno=turnoAuto(now);
+  const hinicio=hhmm(now);
+  const fecha=ddmmyyyy(now);
+
+  // Actualizar UI
+  document.getElementById('f-hinicio').value=hinicio;
+  document.getElementById('f-fecha').value  =fecha;
+  const td=document.getElementById('turno-disp');
+  td.textContent=(turno==='DIA'?'☀️ DÍA':'🌙 NOCHE')+' — inicio '+hinicio;
+  td.className='turno-disp '+(turno==='DIA'?'dia':'noche');
+
+  const _desc    = document.getElementById('h-desc').value;
+  const _kgrHid  = parseFloat(document.getElementById('h-kgr').value)||0;
+  const _kgrDesc = (()=>{ const m=_desc.match(/X\s*([\d.]+)\s*KG/i); return m?parseFloat(m[1]):0; })();
+  const _kgrFinal= _kgrHid || _kgrDesc || 0;
+  const _cod     = document.getElementById('h-cod').value;
+  const _bomE    = bomLookup(_cod);
+  // PULG calculado de forma independiente — NO depende de window._pulgActual
+  const _mPulgIni = (_desc||'').match(/(\d+[\d."]*)\s*PULG/i);
+  const _pulgFinal = (_bomE && _bomE.pulg) ? _bomE.pulg : (_mPulgIni ? _mPulgIni[1] : '');
+  sesion={
+    maq, asist, mqsta, op, turno, hinicio, fecha,
+    mes:    mesNombre(now),
+    pedido: document.getElementById('h-ped').value,
+    cliente:document.getElementById('h-cli').value,
+    codigo: _cod,
+    desc:   _desc,
+    rol:    parseInt(document.getElementById('h-rol').value)||0,
+    caj:    parseInt(document.getElementById('h-caj').value)||0,
+    tuco:   document.getElementById('h-tuc').value,
+    kgr:    _kgrFinal,
+    kgt:    document.getElementById('h-kgt').value,
+    lote:   document.getElementById('h-lote').value,
+    pesoTuco: _bomE&&_bomE.p&&_bomE.p!=='AUTOMÁTICO'?_bomE.p:(document.getElementById('h-tuc').value||''),
+    colorBom: _bomE?(_bomE.color||'NATURAL'):'NATURAL',
+    pulg:     _pulgFinal,
+    cajxund:  _bomE ? (_bomE.c||0) : 0,
+  };
+
+  document.getElementById('live-banner').classList.add('on');
+  document.getElementById('live-info').innerHTML=
+    `<span>Máq: <strong>${sesion.maq}</strong></span>
+     <span>OP: <strong>${sesion.op}</strong></span>
+     <span>Pedido: <strong>${sesion.pedido||'—'}</strong></span>
+     <span>Inicio: <strong>${sesion.hinicio}</strong></span>
+     <span>Turno: <strong>${sesion.turno}</strong></span>
+     <span>Asistente: <strong>${sesion.asist}</strong></span>
+     <span>Maquinista: <strong>${sesion.mqsta||'—'}</strong></span>`;
+  document.getElementById('btn-ini').disabled=true;
+  // Precargar campos del PASO 4 con datos automáticos
+  setTimeout(()=>{
+    const fPesoT = document.getElementById('f-peso-tuco');
+    const fColor = document.getElementById('f-color');
+    if(fPesoT && sesion.pesoTuco) fPesoT.value = sesion.pesoTuco;
+    if(fColor) fColor.value = sesion.colorBom||'NATURAL';
+    const fBobDisp = document.getElementById('f-bobina');
+    if(fBobDisp) fBobDisp.value = sesion.colorBom || '—';
+    window._cajxund    = sesion.cajxund    || 0.25;
+    window._pulgActual = sesion.pulg       || '';
+    window._colorActual= sesion.colorBom   || 'NATURAL';
+    window._pesoTucoActual = sesion.pesoTuco || '';
+  },100);
+  document.getElementById('card-stop').style.display='block';
+  toast('▶ Iniciado — '+hinicio,'ok');
+  setTimeout(()=>document.getElementById('card-stop').scrollIntoView({behavior:'smooth',block:'start'}),200);
+  } catch(err){
+    toast('Error al iniciar: '+err.message,'err');
+    console.error('iniciar() error:', err);
+  }
+}
+
+function tipoFinal(desc){
+  desc=desc||'';
+  if(/MANUAL/i.test(desc))          return 'SFM';
+  if(/ALIM/i.test(desc))            return 'SFALIM';
+  if(/PRE.?ESTIR/i.test(desc))      return 'SFPRE';
+  if(/AUTO/i.test(desc))            return 'SFA';
+  if(/CORE/i.test(desc))            return 'CORE';
+  return '';
+}
+
+/* ══════════════════════════════════════════
+   PARAR
+══════════════════════════════════════════ */
+function parar(){
+  try {
+  if(!sesion){toast('No hay producción iniciada — presiona INICIAR primero','warn');return;}
+  const prod=parseFloat(document.getElementById('f-prod').value)||0;
+  if(!prod){toast('Ingresa los rollos producidos','warn');return;}
+
+  const now   =new Date();
+  const hfin  =hhmm(now);
+  // hfin ya capturado arriba como variable
+
+  // KGR: global > sesion > descripcion
+  const kgr = window._kgrActual || sesion.kgr || (()=>{
+    const m=(sesion.desc||'').match(/X\s*([\d.]+)\s*KG/i);
+    return m?parseFloat(m[1]):0;
+  })();
+
+  const ant   =parseFloat(document.getElementById('f-ant').value)||0;
+  const kg    =(prod*kgr).toFixed(2);
+  const pend  =Math.max(0,(sesion.rol||0)-prod-ant);
+  const estado=pend<=0?'COMPLETO':'PENDIENTE';
+  const bobinaVal= document.getElementById('f-bobina').value;
+  // Mermas individuales por motivo (una columna cada una)
+  const mTucoCol  = parseFloat(document.getElementById('m-tuco-col').value)||0;
+  const mPesoBajo = parseFloat(document.getElementById('m-peso-bajo').value)||0;
+  const mPesoAlto = parseFloat(document.getElementById('m-peso-alto').value)||0;
+  const mVarEsp   = parseFloat(document.getElementById('m-var-esp').value)||0;
+  const mSaldoBob = parseFloat(document.getElementById('m-saldo-bob').value)||0;
+  const mRolHueco = parseFloat(document.getElementById('m-rol-hueco').value)||0;
+  const mRolAire  = parseFloat(document.getElementById('m-rol-aire').value)||0;
+  const mRolArr   = parseFloat(document.getElementById('m-rol-arr').value)||0;
+  const mTucoArq  = parseFloat(document.getElementById('m-tuco-arq').value)||0;
+  const mkg       = mTucoCol+mPesoBajo+mPesoAlto+mVarEsp+mSaldoBob+mRolHueco+mRolAire+mRolArr+mTucoArq;
+  const mkgColor  = 0;
+  const mtipo     = '';
+  const bobina   =document.getElementById('f-bobina').value.trim();
+  const pesoTuco =document.getElementById('f-peso-tuco').value.trim();
+  const color    =document.getElementById('f-color').value;
+  const velocidad=document.getElementById('f-velocidad').value.trim();
+  const tinsrv   =parseInt(document.getElementById('f-tinsrv').value)||0;
+  const treutil  =parseInt(document.getElementById('f-treutil').value)||0;
+  const cajProd  =parseInt(document.getElementById('f-cajas-prod').value)||0;
+  const ccArrugas=document.getElementById('cc-arrugas').checked?'✓':'';
+  const ccAire   =document.getElementById('cc-aire').checked?'✓':'';
+  const ccCaja   =document.getElementById('cc-caja').checked?'✓':'';
+  const ccPeso   =document.getElementById('cc-peso').checked?'✓':'';
+  const ccCentro =document.getElementById('cc-centro').checked?'✓':'';
+  const obs   =document.getElementById('f-obs').value.trim();
+  const horas =diffHoras(sesion.hinicio,hfin);
+
+  const rec={
+    id:       Date.now(),
+    fecha:    sesion.fecha,
+    mes:      sesion.mes,
+    encargado:sesion.asist,
+    maq:      sesion.maq,
+    maquinista:sesion.mqsta,
+    turno:    sesion.turno,
+    tipo:     tipoFinal(sesion.desc),
+    op:       sesion.op,
+    lote:     document.getElementById('f-lote-prod').value.trim() || sesion.lote||'',
+    codigo:   sesion.codigo||'',
+    bobina:   bobina,
+    desc:     sesion.desc||'',
+    rollos:   sesion.rol||0,
+    cajas:    cajProd||sesion.caj||0,
+    kgPartes: parseFloat(kg),
+    kgRollo:  kgr,
+    tuco:     sesion.tuco||'',
+    pulg:     sesion.pulg || window._pulgActual || '',
+    color:    window._colorActual  || sesion.colorBom||'NATURAL',
+    pesoTuco: window._pesoTucoActual||sesion.pesoTuco||'',
+
+    mermaNat:   mkg,
+    mermaCol:   mkgColor,
+    motivoMer:  mtipo,
+    mTucoCol:   mTucoCol,
+    mPesoBajo:  mPesoBajo,
+    mPesoAlto:  mPesoAlto,
+    mVarEsp:    mVarEsp,
+    mSaldoBob:  mSaldoBob,
+    mRolHueco:  mRolHueco,
+    mRolAire:   mRolAire,
+    mRolArr:    mRolArr,
+    mTucoArq:   mTucoArq,
+    tInsrv:   tinsrv,
+    tReutil:  treutil,
+    horas,
+    hinicio:  sesion.hinicio,
+    hfin,
+    velocidad:velocidad,
+    rollosCI: '',
+    ccArrugas, ccAire, ccCaja, ccPeso, ccCentro,
+    // Extra para filtros
+    rollProd:prod, prodAnt:ant, pendiente:pend, estado,
+    cliente:sesion.cliente, pedido:sesion.pedido, obs
+  };
+
+  registros.unshift(rec);
+  localStorage.setItem('reb5_regs',JSON.stringify(registros));
+  updateStats();
+  enviarGS(rec);
+  toast('⏹ Guardado — '+hfin,'ok');
+  reset();
+  } catch(err){
+    toast('ERROR: '+err.message,'err');
+    console.error('parar() error:', err);
+  }
+}
+
+/* ══════════════════════════════════════════
+   ENVIAR A GOOGLE SHEETS
+══════════════════════════════════════════ */
+function enviarGS(rec){
+  const fd = new FormData();
+  // AH = H.Final - H.Inicial (diferencia)
+  let diffH = '';
+  if(rec.hinicio && rec.hfin){
+    const [hi,mi] = rec.hinicio.split(':').map(Number);
+    const [hf,mf] = rec.hfin.split(':').map(Number);
+    let diff = (hf*60+mf)-(hi*60+mi);
+    if(diff<0) diff+=1440;
+    diffH = (diff/60).toFixed(2);
+  }
+  const sumaMermas = (rec.mTucoCol||0)+(rec.mPesoBajo||0)+(rec.mPesoAlto||0)+
+    (rec.mVarEsp||0)+(rec.mSaldoBob||0)+(rec.mRolHueco||0)+
+    (rec.mRolAire||0)+(rec.mRolArr||0)+(rec.mTucoArq||0);
+
+  const campos = {
+    fechaProd:  rec.fecha        ||'',  // B
+    mes:        rec.mes          ||'',  // D
+    asistente:  rec.encargado    ||'',  // E
+    maquina:    rec.maq          ||'',  // F
+    operador:   rec.maquinista   ||'',  // G
+    turno:      rec.turno        ||'',  // J
+    op:         rec.op           ||'',  // K
+    lote:       rec.lote         ||'',  // L
+    codigo:     rec.codigo       ||'',  // M
+    desc:       rec.desc         ||'',  // N
+    rollos:     rec.rollProd     ||0,   // O
+    cajas:      rec.cajas        ||0,   // P
+    kg:         rec.kgPartes     ||0,   // Q: PRD PARTES
+    kgr:        rec.kgRollo      ||0,   // R: Peso x Rollo
+    pulg:       rec.pulg         ||'',  // S: Medida Tuco (PULG)
+    pesoTuco:   rec.pesoTuco     ||'',  // T: Peso Tuco
+    color:      rec.color        ||'',  // U: COLOR
+    mTucoCol:   rec.mTucoCol     ||0,   // V
+    mPesoBajo:  rec.mPesoBajo    ||0,   // W
+    mPesoAlto:  rec.mPesoAlto    ||0,   // X
+    mVarEsp:    rec.mVarEsp      ||0,   // Y
+    mSaldoBob:  rec.mSaldoBob    ||0,   // Z
+    mRolHueco:  rec.mRolHueco    ||0,   // AA
+    mRolAire:   rec.mRolAire     ||0,   // AB
+    mRolArr:    rec.mRolArr      ||0,   // AC
+    mTucoArq:   rec.mTucoArq     ||0,   // AD
+    sumaMermas: sumaMermas,             // AE
+    hInicio:    rec.hinicio      ||'',  // AF
+    hFinal:     rec.hfin         ||'',  // AG
+    diffHoras:  diffH,                  // AH: resta H.Final - H.Inicial
+    velocidad:  rec.velocidad    ||'',  // AI: velocidad real
+    observacion: rec.obs         ||''   // AN: Observación / Paradas
+  };
+  Object.entries(campos).forEach(([k,v])=>fd.append(k,String(v)));
+  // Usamos JSONP-style via no-cors para escribir, pero verificamos con un GET de confirmación
+  fetch(GS_SCRIPT,{method:'POST',mode:'no-cors',body:fd})
+    .then(()=>{
+      toast('☁ Enviado a Google Sheets','ok');
+      console.log('Datos enviados:', campos);
+    })
+    .catch((err)=>{
+      toast('⚠ Guardado local — sin conexión','warn');
+      console.error('Error de red al enviar:', err);
+    });
+}
+
+function onBobinaChange(val){
+  const fColor = document.getElementById('f-color');
+  if(val==='NATURAL'){
+    if(fColor) fColor.value='NATURAL';
+  } else {
+    // Color automático del BOM
+    if(fColor && sesion && sesion.colorBom && sesion.colorBom!=='NATURAL')
+      fColor.value = sesion.colorBom;
+    else if(fColor) fColor.value='COLOR';
+  }
+}
+
+/* ══════════════════════════════════════════
+   RESET
+══════════════════════════════════════════ */
+function reset(){
+  sesion=null;
+  document.getElementById('live-banner').classList.remove('on');
+  document.getElementById('card-stop').style.display='none';
+  document.getElementById('btn-ini').disabled=false;
+  document.getElementById('op-panel').classList.remove('on');
+  ['f-op','f-hinicio','f-fecha','f-hfin','f-prod','f-ant','f-obs','f-mkg','f-mkg-color','f-bobina','f-peso-tuco','f-velocidad','f-tinsrv','f-treutil','f-cajas-prod','m-tuco-col','m-peso-bajo','m-peso-alto','m-var-esp','m-saldo-bob','m-rol-hueco','m-rol-aire','m-rol-arr','m-tuco-arq','f-lote-prod'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  ['h-ped','h-cli','h-cod','h-desc','h-rol','h-caj','h-tuc','h-kgr','h-kgt','h-lote'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('f-maq').value='';
+  document.getElementById('f-maq').classList.remove('sel');
+  document.getElementById('f-asist').value='';
+  document.getElementById('f-maqsta').value='';
+  document.getElementById('f-maqsta-dni').value='';
+  document.getElementById('f-maqsta-nombre').textContent='';
+  document.getElementById('f-mtipo').selectedIndex=0;
+  document.getElementById('f-color').selectedIndex=0;
+  ['cc-arrugas','cc-aire','cc-caja','cc-peso','cc-centro'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.checked=false;
+  });
+  const td=document.getElementById('turno-disp');
+  td.textContent='— Se asigna al iniciar —';
+  td.className='turno-disp';
+  ['k-rol','k-kg','k-pct'].forEach(id=>document.getElementById(id).textContent=id==='k-kg'?'0.00':'0');
+  document.getElementById('k-est').textContent='—';
+  document.getElementById('k-est').style.color='var(--mut)';
+  document.getElementById('k-estbox').style.borderColor='';
+  window._kgrActual = 0;
+  window._rolActual = 0;
+  window._cajxund   = 0.25;
+}
+
+/* ══════════════════════════════════════════
+   STATS
+══════════════════════════════════════════ */
+function updateStats(){
+  const hoy=ddmmyyyy();
+  const r=registros.filter(x=>x.fecha===hoy);
+  document.getElementById('s0').textContent=r.length;
+  document.getElementById('s1').textContent=r.reduce((a,x)=>a+(x.rollProd||0),0);
+  document.getElementById('s2').textContent=r.reduce((a,x)=>a+parseFloat(x.kgPartes||0),0).toFixed(0);
+  document.getElementById('s3').textContent=r.filter(x=>x.estado==='COMPLETO').length;
+  document.getElementById('s4').textContent=r.filter(x=>x.estado==='PENDIENTE').length;
+}
+
+/* ══════════════════════════════════════════
+   HISTORIAL
+══════════════════════════════════════════ */
+function renderHist(){
+  const tbody=document.getElementById('hist-body');
+  const empty=document.getElementById('hist-empty');
+  empty.style.display=registros.length?'none':'block';
+  const tC={'DIA':'b-dia','NOCHE':'b-noche'};
+  tbody.innerHTML=registros.map(x=>`<tr>
+    <td>${x.fecha}</td>
+    <td class="td-s">${x.mes||''}</td>
+    <td class="td-s">${x.encargado||'—'}</td>
+    <td class="td-s">${x.maq||'—'}</td>
+    <td class="td-s">${x.maquinista||'—'}</td>
+    <td><span class="bdg ${tC[x.turno]||'b-dia'}">${x.turno||'—'}</span></td>
+    <td class="td-s">${x.tipo||''}</td>
+    <td class="td-op">${x.op||'—'}</td>
+    <td class="td-s">${x.lote||''}</td>
+    <td class="td-s">${x.codigo||'—'}</td>
+    <td class="td-s">${x.bobina||''}</td>
+    <td class="td-desc td-s" title="${x.desc||''}">${(x.desc||'—').substring(0,35)}…</td>
+    <td class="td-n">${x.rollos||0}</td>
+    <td class="td-n">${x.cajas||0}</td>
+    <td class="td-n td-teal">${x.kgPartes||0}</td>
+    <td class="td-n">${x.kgRollo||0}</td>
+    <td class="td-s">${x.tuco||'—'}</td>
+    <td class="td-n" style="color:var(--red)">${x.mermaNat||0}</td>
+    <td class="td-s">${x.motivoMer||''}</td>
+    <td class="td-n">${x.horas||''}</td>
+    <td class="td-s">${x.hinicio||'—'}</td>
+    <td class="td-s">${x.hfin||'—'}</td>
+    <td><button class="btn-del" onclick="delReg(${x.id})">✕</button></td>
+  </tr>`).join('');
+}
+
+function delReg(id){
+  if(!confirm('¿Eliminar?'))return;
+  registros=registros.filter(x=>x.id!==id);
+  localStorage.setItem('reb5_regs',JSON.stringify(registros));
+  renderHist(); updateStats();
+}
+
+/* ══════════════════════════════════════════
+   AVANCE POR TURNO
+══════════════════════════════════════════ */
+function renderAvance(){
+  cargarConsolidadoEspejo();
+}
+
+const SEC_COLORES = {
+  'PRE - ESTIRADO':           '#3b82f6',
+  'REBOBINADO - PRIORIDAD 1': '#00d4aa',
+  'REBOBINADO - PRIORIDAD 2': '#f59e0b',
+  'CONSUMO INTERNO':          '#a78bfa'
+};
+
+function cargarConsolidadoEspejo(){
+  document.getElementById('av-status').textContent = '⏳ Cargando desde Google Sheets...';
+  window._consCallback = function(data){
+    const tag = document.getElementById('_cons_jsonp');
+    if(tag) tag.remove();
+    if(!data || data.error){
+      document.getElementById('av-status').textContent = '⚠ Error al cargar: '+(data?data.error:'desconocido');
+      return;
+    }
+    window._consolidadoData = data;
+    document.getElementById('av-prog-gral').textContent = Number(data.progGeneral||0).toFixed(0);
+    document.getElementById('av-acum').textContent = Number(data.avanceAcum||0).toFixed(0);
+    document.getElementById('av-dia').textContent = Number(data.avanceDia||0).toFixed(0);
+    document.getElementById('av-noche').textContent = Number(data.avanceNoche||0).toFixed(0);
+    renderSeccionesEspejo(data.secciones||[]);
+    document.getElementById('av-status').textContent = '✔ Reflejo de CONSOLIDADO - DIA — actualizado '+hhmm(new Date());
+  };
+  const s = document.createElement('script');
+  s.id = '_cons_jsonp';
+  s.src = GS_SCRIPT + '?action=getConsolidado&callback=_consCallback';
+  s.onerror = function(){
+    s.remove();
+    document.getElementById('av-status').textContent = '⚠ Sin conexión al Sheet';
+  };
+  document.head.appendChild(s);
+}
+
+function renderSeccionesEspejo(secciones){
+  const cont = document.getElementById('av-secciones');
+  let html = '';
+
+  secciones.forEach(sec=>{
+    if(!sec.filas || !sec.filas.length) return;
+    const color = SEC_COLORES[sec.titulo] || '#666';
+
+    html += `
+    <div class="card" style="padding:0;margin-bottom:14px;overflow:hidden;border-color:${color}55">
+      <div style="background:${color}22;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid ${color}55">
+        <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:${color}">${sec.titulo}</span>
+        <span style="font-size:10px;color:var(--mut)">
+          KG: <b style="color:${color}">${Number(sec.totalKg||0).toFixed(1)}</b> &nbsp;|&nbsp;
+          Día: <b>${Number(sec.totalDia||0).toFixed(0)}</b> &nbsp;
+          Tarde: <b>${Number(sec.totalTarde||0).toFixed(0)}</b> &nbsp;
+          Noche: <b>${Number(sec.totalNoche||0).toFixed(0)}</b> &nbsp;|&nbsp;
+          Pendiente: <b style="color:var(--warn)">${Number(sec.totalPendiente||0).toFixed(1)}</b>
+        </span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>F.Prod</th><th>OP</th><th>Cliente</th><th>Descripción</th>
+            <th class="td-n">Rollos</th><th class="td-n">KG</th>
+            <th class="td-n">Día</th><th class="td-n">Tarde</th><th class="td-n">Noche</th>
+            <th class="td-n">Prod.Ant.</th><th class="td-n">Pendiente</th>
+            <th>Estado</th><th>Asistente</th>
+          </tr></thead>
+          <tbody>
+            ${sec.filas.map(x=>`<tr>
+              <td class="td-s">${x.fechaProd||'—'}</td>
+              <td class="td-op">${x.op}</td>
+              <td class="td-s" title="${x.cliente}">${(x.cliente||'—').substring(0,16)}</td>
+              <td class="td-desc td-s" title="${x.desc}">${(x.desc||'—').substring(0,32)}…</td>
+              <td class="td-n">${x.rollos||''}</td>
+              <td class="td-n">${Number(x.kg||0).toFixed(1)}</td>
+              <td class="td-n" style="color:var(--blue)">${x.dia||''}</td>
+              <td class="td-n">${x.tarde||''}</td>
+              <td class="td-n" style="color:var(--mut2)">${x.noche||''}</td>
+              <td class="td-n">${x.prodAnterior||''}</td>
+              <td class="td-n td-hl" style="color:${(x.pendiente||0)>0?'var(--warn)':'var(--green)'}">${x.pendiente||0}</td>
+              <td><span class="bdg ${(x.estado||'').toUpperCase().includes('COMPLET')?'b-ok':'b-pend'}">${x.estado||'—'}</span></td>
+              <td class="td-s">${x.asistente||'—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+
+  if(!html){
+    html = '<div class="empty">Sin datos en CONSOLIDADO - DIA, o aún no carga.</div>';
+  }
+  cont.innerHTML = html;
+}
+
+function filtrarAvance(q){
+  if(!window._consolidadoData) return;
+  q = q.toLowerCase();
+  const secFiltradas = window._consolidadoData.secciones.map(sec=>({
+    ...sec,
+    filas: sec.filas.filter(x=>
+      (x.op||'').toLowerCase().includes(q) ||
+      (x.cliente||'').toLowerCase().includes(q) ||
+      (x.desc||'').toLowerCase().includes(q) ||
+      (x.codigo||'').toLowerCase().includes(q))
+  }));
+  renderSeccionesEspejo(secFiltradas);
+}
+
+
+function renderMermas(){
+  const hoy=ddmmyyyy();
+  const r=registros.filter(x=>x.fecha===hoy&&x.mermaNat>0);
+  const total=r.reduce((a,x)=>a+parseFloat(x.mermaNat||0),0);
+  const kgProd=parseFloat(document.getElementById('s2').textContent)||0;
+  document.getElementById('m-kg').textContent  =total.toFixed(2);
+  document.getElementById('m-pct').textContent =kgProd>0?(total/kgProd*100).toFixed(1)+'%':'0%';
+  document.getElementById('m-regs').textContent=r.length;
+  const tbody=document.getElementById('mer-body');
+  document.getElementById('mer-empty').style.display=r.length?'none':'block';
+  tbody.innerHTML=r.map(x=>`<tr>
+    <td class="td-s">${x.hfin||'—'}</td>
+    <td class="td-op">${x.op||'—'}</td>
+    <td class="td-s">${x.maquinista||'—'}</td>
+    <td class="td-n" style="color:var(--red)">${x.mermaNat} KG</td>
+    <td class="td-s">${x.motivoMer||'—'}</td>
+    <td class="td-s">${x.obs||'—'}</td>
+  </tr>`).join('');
+}
+
+/* ══════════════════════════════════════════
+   PERSONAL
+══════════════════════════════════════════ */
+function renderPers(){
+  renderAsistentes();
+  const hoy=ddmmyyyy();
+  const r=registros.filter(x=>x.fecha===hoy&&x.encargado);
+  const map={};
+  r.forEach(x=>{
+    if(!map[x.encargado])map[x.encargado]={nombre:x.encargado,rol:0,kg:0,regs:0,comp:0};
+    map[x.encargado].rol+=x.rollProd||0;
+    map[x.encargado].kg +=parseFloat(x.kgPartes||0);
+    map[x.encargado].regs++;
+    if(x.estado==='COMPLETO')map[x.encargado].comp++;
+  });
+  const grid=document.getElementById('pers-grid');
+  const arr=Object.values(map);
+  if(!arr.length){
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1">Sin datos del día.</div>';return;
+  }
+  grid.innerHTML=arr.map(p=>`
+    <div class="card" style="padding:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;margin-bottom:3px">👤 ${p.nombre}</div>
+      <div style="font-size:11px;color:var(--mut2);margin-bottom:10px">${p.regs} registro(s) hoy</div>
+      <div style="display:flex;gap:16px">
+        <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--gold)">${p.rol}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--mut)">Rollos</div></div>
+        <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--teal)">${p.kg.toFixed(0)}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--mut)">KG</div></div>
+        <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--green)">${p.comp}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--mut)">Completos</div></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════
+   CONFIGURACIÓN — Máquinas, Asistentes, Operarios
+══════════════════════════════════════════ */
+let maquinas  = JSON.parse(localStorage.getItem('reb5_maquinas') ||'["1","2","4","5","6","7","8","9","10"]');
+let operarios = JSON.parse(localStorage.getItem('reb5_operarios')||'[]');
+
+function renderConfig(){
+  // Chips máquinas
+  const mc = document.getElementById('maq-chips');
+  if(mc) mc.innerHTML = maquinas.map(m=>`
+    <div style="background:var(--sur);border:1px solid var(--bor);border-radius:20px;
+      padding:5px 12px;font-size:13px;color:var(--gold);display:inline-flex;align-items:center;gap:6px">
+      🔧 ${m}
+      <button onclick="delMaq('${m}')" style="background:none;border:none;color:var(--mut);cursor:pointer">✕</button>
+    </div>`).join('');
+
+  // Chips asistentes
+  const ac = document.getElementById('asist-chips-cfg');
+  if(ac) ac.innerHTML = asistentes.map(a=>`
+    <div style="background:var(--sur);border:1px solid var(--bor);border-radius:20px;
+      padding:5px 12px;font-size:13px;color:var(--teal);display:inline-flex;align-items:center;gap:6px">
+      👤 ${a}
+      <button onclick="delAsist('${a}')" style="background:none;border:none;color:var(--mut);cursor:pointer">✕</button>
+    </div>`).join('');
+
+  // Chips operarios
+  const oc = document.getElementById('oper-chips');
+  if(oc) oc.innerHTML = operarios.map(o=>`
+    <div style="background:var(--sur);border:1px solid var(--bor);border-radius:20px;
+      padding:5px 12px;font-size:13px;color:var(--txt);display:inline-flex;align-items:center;gap:6px">
+      🔩 ${o}
+      <button onclick="delOper('${o}')" style="background:none;border:none;color:var(--mut);cursor:pointer">✕</button>
+    </div>`).join('');
+
+  // Actualizar selectores
+  renderMaqSelect();
+  renderOperSelect();
+}
+
+function renderMaqSelect(){
+  const sel = document.getElementById('f-maq');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Seleccionar...</option>' +
+    maquinas.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
+}
+
+function renderOperSelect(){
+  const sel = document.getElementById('f-maqsta');
+  if(!sel) return;
+  const cur = sel.value;
+  // Combinar lista fija + operarios custom
+  const todos = [...new Set([...operarios,
+    'ALDO TUANAMA','ALFONSO FLORES','ALFREDO IRARICA','ANGHELO HUAPAYA',
+    'ANIBAL BALDEON','BRAYAN VASQUEZ','CESAR SAYAS','CRISTHIAN TINEO',
+    'DANIEL ARCELA','DANIEL LLERENA','DIMAS MICHI','EDGAR HUAPAYA',
+    'EDGAR ONCEVAY','EFRAIN MEZA','ELMER TUANAMA','FASABI TULER',
+    'GILBERTO REATEGUI','IQUE MUÑOZ','JAIME BARRETO','JASSON CANTERO',
+    'JESSON BENITES','JHAN CASTILLON','JHAN MARCO','JHON CHERO',
+    'JHON COLALA','JHON CORDOVA','JIM MACEDO','JOAQUIN LA MADRID',
+    'JUAN CAMACHO','JUAN PEREYRA','JULIO SABOYA','LEONARD MACEDO',
+    'LEYSER HUACHO','MARCO ASPAJO','MARCO ZAMBRANO','MILTON VALLADARES',
+    'NARVIL TAPULLIMA','NELSON TACCO','PETER MORCERA','REIZER CRUZ ROSADO',
+    'RENZO OLAVARRIA','RUSBEL MUNGUIA','VICTOR SONCO','YONATON HUARIPAUCAR'
+  ])].sort();
+  sel.innerHTML = '<option value="">— Seleccionar —</option>' +
+    todos.map(o=>`<option value="${o}" ${o===cur?'selected':''}>${o}</option>`).join('');
+}
+
+function addMaq(){
+  const inp = document.getElementById('new-maq');
+  const n = inp.value.trim();
+  if(!n||maquinas.includes(n)){toast('Ya existe o vacío','warn');return;}
+  maquinas.push(n);
+  maquinas.sort((a,b)=>parseInt(a)-parseInt(b));
+  localStorage.setItem('reb5_maquinas',JSON.stringify(maquinas));
+  inp.value=''; renderConfig();
+  toast('✔ Máquina '+n+' agregada','ok');
+}
+function delMaq(n){
+  maquinas=maquinas.filter(m=>m!==n);
+  localStorage.setItem('reb5_maquinas',JSON.stringify(maquinas));
+  renderConfig();
+}
+
+function addAsistCfg(){
+  const inp = document.getElementById('new-asist-cfg');
+  const n = inp.value.trim();
+  if(!n||asistentes.includes(n)){toast('Ya existe o vacío','warn');return;}
+  asistentes.push(n);
+  localStorage.setItem('reb5_asist',JSON.stringify(asistentes));
+  inp.value=''; renderConfig(); renderAsistentes();
+  toast('✔ Asistente agregado','ok');
+}
+
+function addOper(){
+  const inp = document.getElementById('new-oper');
+  const n = inp.value.trim().toUpperCase();
+  if(!n||operarios.includes(n)){toast('Ya existe o vacío','warn');return;}
+  operarios.push(n);
+  localStorage.setItem('reb5_operarios',JSON.stringify(operarios));
+  inp.value=''; renderConfig();
+  toast('✔ Operario '+n+' agregado','ok');
+}
+function delOper(n){
+  operarios=operarios.filter(o=>o!==n);
+  localStorage.setItem('reb5_operarios',JSON.stringify(operarios));
+  renderConfig();
+}
+
+/* ══════════════════════════════════════════
+   ASISTENTES
+══════════════════════════════════════════ */
+function renderAsistentes(){
+  const sel=document.getElementById('f-asist');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Seleccionar —</option>'+
+    asistentes.map(a=>`<option ${a===cur?'selected':''}>${a}</option>`).join('');
+  const chips=document.getElementById('asist-chips');
+  if(chips) chips.innerHTML=asistentes.map(a=>`
+    <div style="background:var(--sur);border:1px solid var(--bor);border-radius:20px;
+      padding:5px 12px;font-size:12px;color:var(--txt);display:inline-flex;align-items:center;gap:6px">
+      👤 ${a}
+      <button onclick="delAsist('${a}')" style="background:none;border:none;color:var(--mut);
+        cursor:pointer;font-size:12px">✕</button>
+    </div>`).join('');
+}
+function addAsist(){
+  const inp=document.getElementById('new-asist');
+  const n=inp.value.trim();
+  if(!n||asistentes.includes(n)){toast('Nombre vacío o ya existe','warn');return;}
+  asistentes.push(n);
+  localStorage.setItem('reb5_asist',JSON.stringify(asistentes));
+  inp.value='';renderAsistentes();
+}
+function delAsist(n){
+  asistentes=asistentes.filter(a=>a!==n);
+  localStorage.setItem('reb5_asist',JSON.stringify(asistentes));
+  renderAsistentes();
+}
+
+/* ══════════════════════════════════════════
+   EXPORTAR EXCEL
+══════════════════════════════════════════ */
+function exportarExcel(){
+  if(!registros.length){toast('Sin registros','warn');return;}
+  if(typeof XLSX==='undefined'){toast('Cargando... intenta de nuevo','warn');return;}
+  const filas=registros.map(x=>({
+    'Fecha':x.fecha||'', 'Mes':x.mes||'',
+    'Encargado':x.encargado||'', 'Maq':x.maq||'', 'Maquinista':x.maquinista||'',
+    'Horario':x.turno||'', 'TIPO':x.tipo||'',
+    'OP':x.op||'', 'LOTE':x.lote||'', 'Codigo':x.codigo||'', 'Bobina':x.bobina||'',
+    'Descripción':x.desc||'',
+    'Rollos':x.rollos||0, 'Cajas':x.cajas||0,
+    'PRD PARTES (kg)':x.kgPartes||0, 'Peso x Rollo':x.kgRollo||0,
+    'Medida de Tuco':x.tuco||'', 'Peso de Tuco':x.pesoTuco||'', 'COLOR':x.color||'',
+    'Merma natural':x.mermaNat||0, 'Merma color':0,
+    'Motivo merma':x.motivoMer||'', 'T. inservible':0, 'T. reutilizable':0,
+    'HORAS':x.horas||'', 'H. inicial':x.hinicio||'', 'H. final':x.hfin||'',
+    'VELOCIDAD':'', 'ROLLOS CI (KG)':''
+  }));
+  const ws=XLSX.utils.json_to_sheet(filas);
+  ws['!cols']=[
+    {wch:12},{wch:10},{wch:18},{wch:8},{wch:20},{wch:8},{wch:6},
+    {wch:8},{wch:8},{wch:10},{wch:8},{wch:38},{wch:8},{wch:6},
+    {wch:14},{wch:12},{wch:12},{wch:10},{wch:8},
+    {wch:12},{wch:10},{wch:14},{wch:10},{wch:12},
+    {wch:6},{wch:10},{wch:10},{wch:10},{wch:12}
+  ];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'REBOBINADO');
+  XLSX.writeFile(wb,'Rebobinado_'+ddmmyyyy().replace(/\//g,'-')+'.xlsx');
+  toast('✔ Excel descargado','ok');
+}
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+function toast(msg,tipo){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='t-'+(tipo||'ok');
+  t.style.display='block';clearTimeout(t._t);
+  t._t=setTimeout(()=>{t.style.display='none';},3000);
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+renderAsistentes();
+
+// ── DATOS DE PRUEBA — quitar en producción ──
+(function(){
+  const hoy = ddmmyyyy();
+  const demo = [
+    {
+      id:1, fecha:hoy, mes:'Junio', encargado:'Frank Puma Ccallo',
+      maq:'RB-1', maquinista:'JHON CHERO', turno:'DIA', tipo:'SFM',
+      op:'80629', lote:'46152', pedido:'46152', cliente:'STOCK (SURPACK)',
+      codigo:'0300513', desc:'STRETCH FILM AUTOMATICO UV 20 X 20 X 21 KG C/ BLANCO',
+      rollos:60, cajas:15, kgPartes:252, kgRollo:21, tuco:'AUTOMÁTICO',
+      mermaNat:1.5, mermaCol:0, motivoMer:'Saldo de Bobina',
+      horas:'3.50', hinicio:'07:00', hfin:'10:30',
+      rollProd:60, prodAnt:0, pendiente:0, estado:'COMPLETO',
+      obs:'Sin novedad'
+    },
+    {
+      id:2, fecha:hoy, mes:'Junio', encargado:'Mauricio Ávila',
+      maq:'RB-5', maquinista:'ANIBAL BALDEON', turno:'DIA', tipo:'SFM',
+      op:'80691', lote:'46811', pedido:'46811', cliente:'ANTALIS S.A.',
+      codigo:'0030202', desc:'STRETCH FILM AUTOMATICO 20\" X 20 MICRAS X 17.00 KG',
+      rollos:90, cajas:18, kgPartes:1530, kgRollo:17, tuco:'AUTOMÁTICO',
+      mermaNat:2.0, mermaCol:0, motivoMer:'Inicio de bobina',
+      horas:'4.20', hinicio:'07:30', hfin:'11:42',
+      rollProd:90, prodAnt:0, pendiente:0, estado:'COMPLETO',
+      obs:''
+    }
+  ];
+  // Solo agregar si no hay registros del día
+  const existing = JSON.parse(localStorage.getItem('reb5_regs')||'[]');
+  const hoyRegs = existing.filter(x=>x.fecha===hoy);
+  if(hoyRegs.length===0){
+    const merged = [...demo, ...existing];
+    localStorage.setItem('reb5_regs', JSON.stringify(merged));
+    registros = merged;
+  }
+})();
+
+updateStats();
+// Cargar cache inmediatamente para que el buscador funcione offline
+const _cache = JSON.parse(localStorage.getItem('reb5_ops_cache') || '[]');
+if(_cache.length > 0){
+  OPS_LOCAL = _cache;
+  const _ts = parseInt(localStorage.getItem('reb5_ops_ts') || '0');
+  const _mins = Math.round((Date.now() - _ts) / 60000);
+  setGS('ok', OPS_LOCAL.length + ' OPs (caché ' + (_mins < 60 ? _mins+'m' : Math.round(_mins/60)+'h') + ') — actualizando...');
+}
+// Luego intentar conectar al MPS para actualizar
+renderMaqSelect();
+renderOperSelect();
+const _bomCache = JSON.parse(localStorage.getItem('reb5_bom_cache')||'null');
+if(_bomCache) window.BOM_DATA_LIVE = _bomCache;
+cargarMPS(false);
+cargarBaseDatos();
+cargarBOMLive();
+
+/* ══════════════════════════════════════════
+   IMPRIMIR PDF — Formato FSIG-PK0011
+══════════════════════════════════════════ */
+function parsearDesc(desc){
+  desc = desc||'';
+  const pulg = (desc.match(/(\d+[\d."]*)\s*PULG/i)||[])[1]||'';
+  const micr = (desc.match(/(\d+[\d.]*)\s*MICR/i)||[])[1]||'';
+  const peso = (desc.match(/X\s*([\d.]+)\s*KG/i)||[])[1]||'';
+  let tipo = '';
+  if(/MANUAL/i.test(desc))          tipo='SFM';
+  else if(/ALIM/i.test(desc))       tipo='SFALIM';
+  else if(/PRE.?ESTIR/i.test(desc)) tipo='SFPRE';
+  else if(/AUTO/i.test(desc))       tipo='SFA';
+  else if(/CORE/i.test(desc))       tipo='CORE';
+  return {pulg, micr, peso, tipo};
+}
+
+function renderHojaPDF(grupos){
+  const B='#000';
+  const Y='#FFFF00';
+
+  function chk(id,usadas){
+    return usadas.includes(id) ? '■' : '☐';
+  }
+
+  let paginasHtml = '';
+
+  grupos.forEach(grupo=>{
+    const op = grupo.op;
+    const items = grupo.items;
+    if(!items.length) return;
+    const first = items[0];
+
+    const maqsUsadas = [...new Set(items.map(x=>String(x.maq)))];
+    const turnoNum = first.turno==='DIA' ? '1' : '2';
+
+    let filasProd = '';
+    for(let i=0; i<9; i++){
+      const x = items[i];
+      if(x){
+        const bomI = bomLookup(x.codigo);
+        const cajxund = bomI ? bomI.c : 0;
+        const cantCaja = cajxund>0 ? Math.round(1/cajxund) : '';
+        const pulgVal = x.pulg || (bomI?bomI.pulg:'') || '';
+        const micrVal = bomI ? (bomI.micras||'') : '';
+        filasProd += `
+        <tr>
+          <td style="border:1px solid ${B};padding:3px;font-size:9px;text-align:center;background:${Y}">${x.op}</td>
+          <td style="border:1px solid ${B};padding:3px;font-size:9px;text-align:center;background:${Y}">${x.lote||''}</td>
+          <td style="border:1px solid ${B};padding:3px;font-size:9px;background:${Y}">${x.cliente||'STOCK (SURPACK)'}</td>
+          <td style="border:1px solid ${B};padding:3px;font-size:9px;text-align:center;background:${Y}">${x.codigo||''}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">SFM</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${pulgVal}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${micrVal}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${x.kgRollo?Number(x.kgRollo).toFixed(2):''}</td>
+          <td style="border:1px solid ${B};padding:3px;font-size:9px;text-align:center;background:${Y}">${x.rollos||x.rollProd||0}</td>
+          <td style="border:1px solid ${B};padding:3px;font-size:9px;text-align:center;background:${Y}">${x.cajas||0}</td>
+          <td style="border:1px solid ${B};padding:3px;font-size:9px;text-align:center;font-weight:bold;background:${Y}">${(Number(x.kgPartes)||0).toFixed(2)}</td>
+          <td style="border:1px solid ${B};padding:3px;font-size:9px;text-align:center;background:${Y}">${x.color==='NATURAL'?'NA':(x.color||'').substring(0,2).toUpperCase()}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${x.hinicio||''}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${x.hfin||''}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">X</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">X</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${cantCaja}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">X</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">X</td>
+        </tr>`;
+      } else {
+        filasProd += `
+        <tr>
+          <td style="border:1px solid ${B};padding:3px;height:18px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:3px;background:${Y}"></td>
+        </tr>`;
+      }
+    }
+
+    const totalKg = items.reduce((s,x)=>s+(Number(x.kgPartes)||0),0);
+
+    let filasParadas = '';
+    for(let i=0;i<5;i++){
+      const x = items[i];
+      if(x && x.obs && x.obs!=='Sin novedad'){
+        filasParadas += `
+        <tr>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${i+1}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${x.hinicio||''}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${x.hfin||''}</td>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;background:${Y}">${x.obs||''}</td>
+        </tr>`;
+      } else {
+        filasParadas += `
+        <tr>
+          <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${i+1}</td>
+          <td style="border:1px solid ${B};padding:2px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:2px;background:${Y}"></td>
+          <td style="border:1px solid ${B};padding:2px;background:${Y}"></td>
+        </tr>`;
+      }
+    }
+
+    const mermaMotivos = [
+      {label:'Tuco Colapsado',   key:'mTucoCol'},
+      {label:'Peso Bajo',        key:'mPesoBajo'},
+      {label:'Peso Alto',        key:'mPesoAlto'},
+      {label:'Variación de espesor', key:'mVarEsp'},
+      {label:'Saldo de Bobina',  key:'mSaldoBob'},
+      {label:'Rollos Con Hueco', key:'mRolHueco'},
+      {label:'Rollos Con Aire',  key:'mRolAire'},
+      {label:'Rollos Con Arrugas', key:'mRolArr'},
+      {label:'Tucos Arqueados',  key:'mTucoArq'}
+    ];
+    let filasMerma = '';
+    let totalMermaNat = 0, totalMermaCol = 0;
+    mermaMotivos.forEach(m=>{
+      const suma = items.reduce((s,x)=>s+(Number(x[m.key])||0),0);
+      filasMerma += `
+      <tr>
+        <td style="border:1px solid ${B};padding:2px 4px;font-size:8px;font-style:italic;background:${Y}">${m.label}</td>
+        <td style="border:1px solid ${B};padding:2px;font-size:8px;text-align:center;background:${Y}">${suma>0?suma.toFixed(2):''}</td>
+      </tr>`;
+    });
+    items.forEach(x=>{
+      const mn = (Number(x.mTucoCol)||0)+(Number(x.mPesoBajo)||0)+(Number(x.mPesoAlto)||0)+
+        (Number(x.mVarEsp)||0)+(Number(x.mSaldoBob)||0)+(Number(x.mRolHueco)||0)+
+        (Number(x.mRolAire)||0)+(Number(x.mRolArr)||0)+(Number(x.mTucoArq)||0);
+      if(x.bobina==='COLOR') totalMermaCol += mn;
+      else totalMermaNat += mn;
+    });
+
+    const obsList = [...new Set(items.filter(x=>x.obs && x.obs!=='Sin novedad').map(x=>x.obs))];
+    const obs = obsList.length ? obsList.join(' | ') : 'Sin novedad';
+
+    paginasHtml += `
+  <div class="pdf-page" style="page-break-after:always;padding:6mm;font-family:Arial,sans-serif;width:285mm;height:195mm;box-sizing:border-box;background:#fff;color:#000;overflow:hidden">
+
+    <table width="100%" style="border-collapse:collapse;border:1.5px solid ${B};margin-bottom:2px">
+      <tr>
+        <td style="border:1px solid ${B};padding:4px 10px;width:18%;vertical-align:middle">
+          <div style="font-weight:900;font-size:16px;color:#1a5e3a">■ surpack</div>
+        </td>
+        <td style="border:1px solid ${B};padding:4px;text-align:center;font-weight:bold;font-size:12px;background:${Y}">
+          REGISTRO DE PRODUCCIÓN - CALIDAD REBOBINADO
+        </td>
+        <td style="border:1px solid ${B};padding:2px 8px;width:14%;text-align:center;background:${Y}">
+          <div style="font-size:7px">FSIG-PK0011</div>
+          <div style="font-size:6px">Versión: 07&nbsp;&nbsp;19/10/2022</div>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" style="border-collapse:collapse;border:1.5px solid ${B};margin-bottom:2px">
+      <tr>
+        <td style="border:1px solid ${B};padding:3px 8px;background:${Y};font-size:8px">
+          <table width="100%" style="font-size:8px">
+            <tr>
+              <td>${chk('1',maqsUsadas)} REBOBINADORA 1</td>
+              <td>${chk('5',maqsUsadas)} REBOBINADORA 5</td>
+              <td>${chk('7',maqsUsadas)} REB. PRE-ESTRADORA 7</td>
+              <td>${chk('9',maqsUsadas)} REB. SEMI AUTO 9</td>
+            </tr>
+            <tr>
+              <td>${chk('2',maqsUsadas)} REBOBINADORA 2</td>
+              <td>${chk('6',maqsUsadas)} REBOBINADORA 6</td>
+              <td>${chk('8',maqsUsadas)} REB. PRE-ESTRADORA 8</td>
+              <td>${chk('10',maqsUsadas)} REB. SEMI AUTO 10</td>
+            </tr>
+            <tr><td>${chk('4',maqsUsadas)} REBOBINADORA 4</td><td></td><td></td><td></td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" style="border-collapse:collapse;border:1.5px solid ${B};margin-bottom:2px">
+      <tr>
+        <td style="border:1px solid ${B};padding:3px 8px;background:${Y};font-size:9px"><b>OPERARIO:</b> ${first.maquinista||''}</td>
+        <td style="border:1px solid ${B};padding:3px 8px;background:${Y};font-size:9px;width:18%"><b>FECHA:</b> ${first.fecha||''}</td>
+        <td style="border:1px solid ${B};padding:3px 8px;background:${Y};font-size:9px;width:12%"><b>TURNO:</b> ${turnoNum}</td>
+      </tr>
+    </table>
+
+    <table width="100%" style="border-collapse:collapse;border:1.5px solid ${B};margin-bottom:2px">
+      <thead>
+        <tr style="font-weight:bold">
+          <th rowspan="2" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">OP</th>
+          <th rowspan="2" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">Lote</th>
+          <th rowspan="2" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">CLIENTE</th>
+          <th rowspan="2" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">CODIGO DEL PRODUCTO</th>
+          <th colspan="4" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">DESCRIPCION DEL PRODUCTO</th>
+          <th colspan="2" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">CANTIDAD PRODUCIDA</th>
+          <th rowspan="2" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">TOTAL (KG)</th>
+          <th rowspan="2" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">COLOR</th>
+          <th colspan="2" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">DURACIÓN</th>
+          <th colspan="5" style="border:1px solid ${B};padding:2px;font-size:7px;background:${Y}">CONTROL DE CALIDAD</th>
+        </tr>
+        <tr style="font-weight:bold">
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">TIPO</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">PULG</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">MICR</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">PESO(Kg)</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">ROLLOS</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">CAJAS</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">INICIO</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">FINAL</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">Sin arrugas</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">Sin aire</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">Cant/caja</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">Peso correcto</th>
+          <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">Rollos centrados</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filasProd}
+        <tr>
+          <td colspan="10" style="border:1px solid ${B};padding:2px;text-align:right;font-weight:bold;font-size:8px;background:${Y}">PRODUCCIÓN TOTAL (KG)</td>
+          <td style="border:1px solid ${B};padding:2px;text-align:center;font-weight:bold;font-size:8px;background:${Y}">${totalKg.toFixed(2)}</td>
+          <td colspan="8" style="border:1px solid ${B};padding:2px;background:${Y}"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table width="100%" style="border-collapse:collapse">
+      <tr>
+        <td style="width:24%;vertical-align:top;padding-right:3px">
+          <table width="100%" style="border-collapse:collapse;border:1px solid ${B}">
+            <tr><th colspan="4" style="border:1px solid ${B};padding:2px;background:${Y};font-size:8px">PARADAS</th></tr>
+            <tr style="font-weight:bold">
+              <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">N°</th>
+              <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">INICIO</th>
+              <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">FINAL</th>
+              <th style="border:1px solid ${B};padding:1px;font-size:6.5px;background:${Y}">MOTIVO</th>
+            </tr>
+            ${filasParadas}
+          </table>
+
+          <table width="100%" style="border-collapse:collapse;border:1px solid ${B};margin-top:3px">
+            <tr><th colspan="5" style="border:1px solid ${B};padding:1px;background:${Y};font-size:7px;font-style:italic">LEYENDA TIPO PRODUCTO</th></tr>
+            <tr style="font-size:6.5px;font-weight:bold">
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">SFM</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">SFA</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">SFALIM</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">SFPRE</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">CORE</td>
+            </tr>
+            <tr style="font-size:5.5px">
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">MANUAL</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">AUTOMATICO</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">ALIMENTOS</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">PRE ESTIRADO</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">CORELES</td>
+            </tr>
+          </table>
+
+          <table width="100%" style="border-collapse:collapse;border:1px solid ${B};margin-top:3px">
+            <tr><th colspan="6" style="border:1px solid ${B};padding:1px;background:${Y};font-size:7px;font-style:italic">LEYENDA COLORES</th></tr>
+            <tr style="font-size:6.5px;font-weight:bold">
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">NE</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">NA</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">RO</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">BLA</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">AZU</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">VER</td>
+            </tr>
+            <tr style="font-size:5.5px">
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">NEGRO</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">NATURAL</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">ROJO</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">BLANCO</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">AZUL</td>
+              <td style="border:1px solid ${B};padding:1px;text-align:center;background:${Y}">VERDE</td>
+            </tr>
+          </table>
+        </td>
+
+        <td style="width:24%;vertical-align:top;padding-right:3px">
+          <table width="100%" style="border-collapse:collapse;border:1px solid ${B}">
+            <tr>
+              <th style="border:1px solid ${B};padding:2px;background:${Y};font-size:8px">MOTIVOS DE MERMA</th>
+              <th style="border:1px solid ${B};padding:2px;background:${Y};font-size:8px">PESO (kg)</th>
+            </tr>
+            ${filasMerma}
+            <tr>
+              <td style="border:1px solid ${B};padding:1px 4px;font-size:7px;font-weight:bold;background:${Y}">MERMA TOTAL NATURAL</td>
+              <td style="border:1px solid ${B};padding:1px;font-size:7px;text-align:center;font-weight:bold;background:${Y}">${totalMermaNat>0?totalMermaNat.toFixed(2):''}</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid ${B};padding:1px 4px;font-size:7px;font-weight:bold;background:${Y}">MERMA TOTAL COLORES</td>
+              <td style="border:1px solid ${B};padding:1px;font-size:7px;text-align:center;font-weight:bold;background:${Y}">${totalMermaCol>0?totalMermaCol.toFixed(2):''}</td>
+            </tr>
+          </table>
+        </td>
+
+        <td style="width:52%;vertical-align:top">
+          <table width="100%" style="border-collapse:collapse;border:1px solid ${B};height:100%">
+            <tr><th style="border:1px solid ${B};padding:2px;text-align:left;font-style:italic;font-size:8px;background:${Y}">OBSERVACIONES:</th></tr>
+            <tr>
+              <td style="border:1px solid ${B};padding:5px;vertical-align:top;height:148px;white-space:pre-wrap;font-size:9px;line-height:1.5;background:${Y}">${obs}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" style="border-collapse:collapse;border:1.5px solid ${B};margin-top:3px">
+      <tr>
+        <td style="border:1px solid ${B};padding:3px 4px 2px;text-align:center;width:25%">
+          <div style="font-size:8px;font-weight:bold;min-height:12px">Carlos Torres</div>
+          <div style="border-top:1px solid ${B};padding-top:2px;margin-top:12px;font-size:7px">V°B° Jefe de Producción</div>
+        </td>
+        <td style="border:1px solid ${B};padding:3px 4px 2px;text-align:center;width:25%">
+          <div style="font-size:8px;font-weight:bold;min-height:12px">${first.encargado||''}</div>
+          <div style="border-top:1px solid ${B};padding-top:2px;margin-top:12px;font-size:7px">V°B° Supervisor de Producción</div>
+        </td>
+        <td style="border:1px solid ${B};padding:3px 4px 2px;text-align:center;width:25%">
+          <div style="font-size:8px;font-weight:bold;min-height:12px">${first.encargado||''}</div>
+          <div style="border-top:1px solid ${B};padding-top:2px;margin-top:12px;font-size:7px">V°B° Encargado de Rebobinado</div>
+        </td>
+        <td style="border:1px solid ${B};padding:3px 4px 2px;text-align:center;width:25%">
+          <div style="font-size:8px;font-weight:bold;min-height:12px">${first.maquinista||''}</div>
+          <div style="border-top:1px solid ${B};padding-top:2px;margin-top:12px;font-size:7px">V°B° Rebobinador</div>
+        </td>
+      </tr>
+    </table>
+
+  </div>`;
+  });
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>Registro Producción</title>
+    <style>
+      @page { size: A4 landscape; margin: 3mm; }
+      body { margin:0; background:#fff; }
+      .pdf-page:last-child { page-break-after: auto; }
+      table { border-collapse: collapse; }
+      th, td { background:#FFFF00; }
+    </style>
+    </head><body>${paginasHtml}
+    <script>window.onload=function(){setTimeout(function(){window.print();},400);}<\\/script>
+    </body></html>`);
+  win.document.close();
+}
+
+function generarHojaOP(opSel){
+  const modal=document.getElementById('_op_modal');
+  if(modal) modal.remove();
+  const hoy=ddmmyyyy();
+  const regs=registros.filter(x=>x.fecha===hoy);
+  const porOP={};
+  regs.forEach(x=>{if(!porOP[x.op])porOP[x.op]=[];porOP[x.op].push(x);});
+  const opsImprimir=opSel==='todas'?Object.keys(porOP):[opSel];
+  const grupos = opsImprimir.map(op=>({op, items:porOP[op]||[]})).filter(g=>g.items.length);
+  renderHojaPDF(grupos);
+}
+
+function imprimirPDF(opcion){
+  if(opcion==='seleccionar' || !opcion){
+    mostrarSelectorOP();
+    return;
+  }
+  generarHojaOP(opcion);
+}
+
+function parseCsvRebobinado(line){
+  const result=[]; let cur=''; let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){ inQ=!inQ; }
+    else if(c===',' && !inQ){ result.push(cur); cur=''; }
+    else cur+=c;
+  }
+  result.push(cur);
+  return result;
+}
+
+function cargarHistorialRebobinado(callback){
+  const CSV_REB = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRKAvnps8eazsYPsMUFO-j-73seny_36ZcazjjPjkOtmthMlUr-rSgx8-HJndTMeY6eELCAh2fvuw8U/pub?gid=1316590314&single=true&output=csv';
+  fetch(CSV_REB)
+    .then(r=>r.text())
+    .then(csv=>{
+      const lines = csv.split('\n').filter(l=>l.trim());
+      const hist = [];
+      // encabezados en fila 1 (indice 0), datos desde fila 2 (indice 1)
+      // indice CSV = letra de columna (A=0,B=1,...): A=MAQUINA(formula) B=Fecha(1) D=Mes(3)
+      // E=Encargado(4) F=Maq(5) G=Maquinista(6) J=Horario(9) K=OP(10) L=LOTE(11)
+      // M=Codigo(12) N=Desc(13) O=Rollos(14) P=Cajas(15) Q=PRDkg(16) R=PesoRollo(17)
+      // S=PULG(18) T=PesoTuco(19) U=COLOR(20) V=TucoCol(21) W=PesoBajo(22) X=PesoAlto(23)
+      // Y=VarEsp(24) Z=SaldoBob(25) AA=RolHueco(26) AB=RolAire(27) AC=RolArr(28) AD=TucoArq(29)
+      // AE=SumaMermas(30) AF=HInicio(31) AG=HFinal(32) AH=DiffH(33) AI=Velocidad(34) AN=Observacion(39)
+      for(let i=1;i<lines.length;i++){
+        const c = parseCsvRebobinado(lines[i]);
+        const op = (c[10]||'').trim(); // col K = indice 10
+        if(!op) continue;
+        hist.push({
+          fecha: (c[1]||'').trim(),
+          encargado: (c[4]||'').trim(),
+          maq: (c[5]||'').trim(),
+          maquinista: (c[6]||'').trim(),
+          turno: (c[9]||'').trim(),
+          op: op,
+          lote: (c[11]||'').trim(),
+          codigo: (c[12]||'').trim(),
+          desc: (c[13]||'').trim(),
+          rollos: parseFloat(c[14])||0,
+          cajas: parseFloat(c[15])||0,
+          kgPartes: parseFloat(c[16])||0,
+          kgRollo: parseFloat(c[17])||0,
+          pulg: (c[18]||'').trim(),
+          pesoTuco: (c[19]||'').trim(),
+          color: (c[20]||'').trim(),
+          bobina: (c[20]||'').trim()==='NATURAL' ? 'NATURAL' : 'COLOR',
+          mTucoCol: parseFloat(c[21])||0,
+          mPesoBajo: parseFloat(c[22])||0,
+          mPesoAlto: parseFloat(c[23])||0,
+          mVarEsp: parseFloat(c[24])||0,
+          mSaldoBob: parseFloat(c[25])||0,
+          mRolHueco: parseFloat(c[26])||0,
+          mRolAire: parseFloat(c[27])||0,
+          mRolArr: parseFloat(c[28])||0,
+          mTucoArq: parseFloat(c[29])||0,
+          hinicio: (c[31]||'').trim(),
+          hfin: (c[32]||'').trim(),
+          velocidad: (c[34]||'').trim(),
+          cliente: '', // no está en REBOBINADO, se completa con MPS si se requiere
+          tipo: 'SFM',
+          obs: (c[39]||'').trim() || 'Sin novedad'
+        });
+      }
+      window._historialRebobinado = hist;
+      if(callback) callback(hist);
+    })
+    .catch(()=>{
+      toast('⚠ No se pudo cargar historial completo','warn');
+      if(callback) callback(registros); // fallback a local
+    });
+}
+
+function mostrarSelectorOP(){
+  const modal = document.createElement('div');
+  modal.id = '_op_modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--card,#1a1f2e);border-radius:12px;padding:20px;max-width:90vw;max-height:80vh;overflow:auto;min-width:320px">
+      <h3 style="margin:0 0 12px;color:#fff">⏳ Cargando historial completo...</h3>
+    </div>`;
+  document.body.appendChild(modal);
+
+  cargarHistorialRebobinado(function(hist){
+    // Agrupar por OP + Maquinista (una persona = una hoja por OP)
+    const grupos = {};
+    hist.forEach(x=>{
+      const key = x.op + '||' + x.maquinista;
+      if(!grupos[key]) grupos[key] = [];
+      grupos[key].push(x);
+    });
+    const keys = Object.keys(grupos);
+    if(!keys.length){
+      modal.innerHTML = `<div style="background:var(--card,#1a1f2e);border-radius:12px;padding:20px;color:#fff">
+        Sin registros en el historial.
+        <button onclick="document.getElementById('_op_modal').remove()" style="display:block;margin-top:10px;padding:8px;width:100%">Cerrar</button>
+      </div>`;
+      return;
+    }
+
+    window._gruposParaModal = keys.map(k=>{
+      const [op, maquinista] = k.split('||');
+      const item = grupos[k][0];
+      return {key:k, op, maquinista, codigo:item.codigo||'', desc:item.desc||''};
+    }).sort((a,b)=> b.op.localeCompare(a.op));
+
+    function renderLista(lista){
+      return lista.map(g=>
+        `<div class="op-modal-item" onclick="generarHojaOPHist('${g.key}')">
+          <b>OP ${g.op}</b> — ${g.maquinista} — ${g.codigo}
+        </div>`).join('') || '<div style="color:#999;padding:10px">Sin resultados</div>';
+    }
+
+    modal.innerHTML = `
+      <div style="background:var(--card,#1a1f2e);border-radius:12px;padding:20px;max-width:90vw;max-height:80vh;overflow:auto;min-width:320px">
+        <h3 style="margin:0 0 12px;color:#fff">Seleccionar OP para imprimir</h3>
+        <input type="text" placeholder="Buscar por OP, maquinista, código..." 
+          oninput="filtrarModalOP(this.value)" id="_modal_search"
+          style="width:100%;padding:8px;margin-bottom:10px;border-radius:6px;border:1px solid #444;background:#0f1419;color:#fff">
+        <div id="_modal_list">${renderLista(window._gruposParaModal)}</div>
+        <button onclick="document.getElementById('_op_modal').remove()"
+          style="width:100%;margin-top:10px;padding:8px;background:transparent;border:1px solid #444;border-radius:6px;color:#999;cursor:pointer">
+          Cancelar
+        </button>
+      </div>`;
+  });
+}
+
+function filtrarModalOP(q){
+  q = q.toLowerCase();
+  const filtered = window._gruposParaModal.filter(o=>
+    o.op.toLowerCase().includes(q) ||
+    o.maquinista.toLowerCase().includes(q) ||
+    o.codigo.toLowerCase().includes(q));
+  document.getElementById('_modal_list').innerHTML = filtered.map(g=>
+    `<div class="op-modal-item" onclick="generarHojaOPHist('${g.key}')">
+      <b>OP ${g.op}</b> — ${g.maquinista} — ${g.codigo}
+    </div>`).join('') || '<div style="color:#999;padding:10px">Sin resultados</div>';
+}
+
+function generarHojaOPHist(key){
+  const modal=document.getElementById('_op_modal');
+  if(modal) modal.remove();
+  const [op, maquinista] = key.split('||');
+  const hist = window._historialRebobinado || [];
+  const items = hist.filter(x=>x.op===op && x.maquinista===maquinista);
+  if(!items.length){ toast('Sin datos para esa OP','warn'); return; }
+  renderHojaPDF([{op, items}]);
+}
+
+
+</script>
+</body>
+</html>
