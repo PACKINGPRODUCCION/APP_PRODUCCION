@@ -687,7 +687,7 @@ tbody td{padding:7px 8px;white-space:nowrap;}
 /* ══════════════════════════════════════════
    CONFIGURACIÓN — URLs Google Sheets
 ══════════════════════════════════════════ */
-const GS_MPS    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTvvkaJowutisF8bIVKtwU8dtlLCXElFKVLG3u4F_2A9jbWhVSZPlk2SYFwAPnONVwvFiHcvR1aq-8S/pub?gid=1003436557&single=true&output=csv';
+const GS_MPS    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSpDLt6JzXRk2YHhG2hZbMTr-l0_uNujIZK8h5sSO7mHyRU6VAn0C3wMJV1TC3mSemg61TJ4g3f4-ta/pub?gid=449365246&single=true&output=csv';
 const GS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxVpOMjFUV3bgfWnBWAkE82DZ0nbxig07SG5LJKRM5eoSf-211EvRlpZYjxM1PImKqQ/exec';
 
 /* ══════════════════════════════════════════
@@ -773,7 +773,7 @@ function parseCsv(line){
 
 function cargarMPS(manual){
   setGS('load', manual?'Actualizando OPs...':'Cargando OPs del MPS...');
-  const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTvvkaJowutisF8bIVKtwU8dtlLCXElFKVLG3u4F_2A9jbWhVSZPlk2SYFwAPnONVwvFiHcvR1aq-8S/pub?gid=1003436557&single=true&output=csv';
+  const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSpDLt6JzXRk2YHhG2hZbMTr-l0_uNujIZK8h5sSO7mHyRU6VAn0C3wMJV1TC3mSemg61TJ4g3f4-ta/pub?gid=449365246&single=true&output=csv';
   fetch(CSV_URL)
     .then(r=>r.text())
     .then(csv=>{
@@ -2283,7 +2283,7 @@ function parseCsvRebobinado(line){
 }
 
 function cargarHistorialRebobinado(callback){
-  const CSV_REB = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRKAvnps8eazsYPsMUFO-j-73seny_36ZcazjjPjkOtmthMlUr-rSgx8-HJndTMeY6eELCAh2fvuw8U/pub?gid=1316590314&single=true&output=csv';
+  const CSV_REB = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXn0tNGjV765GGjpWKpQy2LA_BY-ssklWdWEe-pzNy8EUmMpIEczDOiMi3nbSBdq7yC3E_Ass5hueh/pub?gid=891314535&single=true&output=csv';
   fetch(CSV_REB)
     .then(r=>r.text())
     .then(csv=>{
