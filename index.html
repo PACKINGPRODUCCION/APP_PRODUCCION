@@ -760,8 +760,6 @@ tbody td{padding:7px 8px;white-space:nowrap;}
   <div class="card">
     <div class="ch"><span class="n">O</span>Operarios / Maquinistas</div>
 
-    <div id="oper-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
-
     <button class="btn" onclick="cargarBaseDatos();toast('Actualizando desde Sheets...','ok')" 
       style="background:#0077b6;font-size:11px;padding:7px 14px">
       🔄 Actualizar desde Google Sheets
@@ -1174,13 +1172,28 @@ function recalc(){
   const kg  =(prod*kgr).toFixed(2);
   const pct =rol>0?Math.round(((prod+ant)/rol)*100):0;
   const pend=Math.max(0,rol-prod-ant);
-  // Alerta si supera el pedido
-  const cajField2 = document.getElementById('f-cajas-prod');
+  // Estado según avance
   const estadoEl = document.getElementById('k-est');
-  if(estadoEl && rol>0 && (prod+ant) > rol){
-    estadoEl.textContent = '⚠ EXCEDE PEDIDO';
-    estadoEl.style.color = '#ef4444';
-    estadoEl.style.fontWeight = '900';
+  if(estadoEl && rol>0){
+    if((prod+ant) > rol){
+      estadoEl.textContent = '⚠ EXCEDE';
+      estadoEl.style.color = '#ef4444';
+      estadoEl.style.background = '#fef2f2';
+      estadoEl.style.border = '2px solid #ef4444';
+      estadoEl.style.fontWeight = '900';
+    } else if(pct>=100){
+      estadoEl.textContent = 'COMPLETO';
+      estadoEl.style.color = '#22c55e';
+      estadoEl.style.background = '';
+      estadoEl.style.border = '';
+      estadoEl.style.fontWeight = '900';
+    } else {
+      estadoEl.textContent = 'PENDIENTE';
+      estadoEl.style.color = '#f59e0b';
+      estadoEl.style.background = '';
+      estadoEl.style.border = '';
+      estadoEl.style.fontWeight = '700';
+    }
   }
   // Auto-calcular cajas SOLO si hay cajxund en el BOM (si no, queda manual)
   const cajField=document.getElementById('f-cajas-prod');
@@ -1278,7 +1291,7 @@ function iniciar(){
     if(fColor) fColor.value = sesion.colorBom||'NATURAL';
     const fBobDisp = document.getElementById('f-bobina');
     if(fBobDisp) fBobDisp.value = sesion.colorBom || '—';
-    window._cajxund    = sesion.cajxund    || 0.25;
+    window._cajxund    = sesion.cajxund    || 0;
     window._pulgActual = sesion.pulg       || '';
     window._colorActual= sesion.colorBom   || 'NATURAL';
     window._pesoTucoActual = sesion.pesoTuco || '';
@@ -1525,9 +1538,8 @@ function reset(){
   document.getElementById('k-est').style.color='var(--mut)';
   document.getElementById('k-estbox').style.borderColor='';
   window._kgrActual = 0;
-  window._cajxund = 0;
+  window._cajxund   = 0;
   window._rolActual = 0;
-  window._cajxund   = 0.25;
 }
 
 /* ══════════════════════════════════════════
