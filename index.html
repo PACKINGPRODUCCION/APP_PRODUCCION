@@ -8,21 +8,22 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;500;600&display=swap');
 :root{
-  --bg:#0d0f18;--sur:#13161f;--card:#181c28;--bor:#252c3f;
-  --gold:#f5a623;--teal:#00d4aa;--blue:#3b82f6;
+  --bg:#f0f4f8;--sur:#ffffff;--card:#ffffff;--bor:#d0dce8;
+  --gold:#0077b6;--teal:#0096c7;--blue:#0077b6;
   --red:#ef4444;--green:#22c55e;--warn:#f59e0b;
-  --txt:#dde3f0;--mut:#4f5878;--mut2:#7a85a3;
+  --txt:#1a2a3a;--mut:#7a8fa6;--mut2:#4a6080;
+  --bg2:#eaf2fb;--ok:#22c55e;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:14px;}
 
 /* TOPBAR */
-.topbar{background:var(--sur);border-bottom:3px solid var(--gold);height:52px;
+.topbar{background:#ffffff;border-bottom:3px solid #0077b6;height:60px;
   padding:0 20px;display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:300;}
-.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;
-  letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
-.logo span{color:var(--mut2);font-weight:400;font-size:13px;margin-left:6px;}
+  position:sticky;top:0;z-index:300;box-shadow:0 2px 8px rgba(0,119,182,.15);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo img{height:40px;}
+.logo span{color:var(--mut2);font-weight:400;font-size:12px;margin-left:6px;}
 #clock{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;
   color:var(--teal);letter-spacing:2px;}
 #fecha-txt{font-size:11px;color:var(--mut2);}
@@ -251,7 +252,7 @@ tbody td{padding:7px 8px;white-space:nowrap;}
 <body>
 
 <div class="topbar">
-  <div class="logo">REBOBINADO<span>Registro de Producción</span></div>
+  <div class="logo"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAIAAACx0UUtAAAQAElEQVR4AexdCXxTVfa+SZq0TRe6UhCQpawiaF2GRQuDCi2IgOwKKuioQ1EYgUGcMhX7FwcV5M9Iq6OOKDNVqjIWEabQUYYKMuNCBVS2FiggCKUFuzdtk/lubpq2JG2SNst7yeF38nLffefee+53vtx37nlpUBroHyEgbQSUjP4RAtJGgDgqbf+QdYwRR4kFUkeAOCp1D5F9xFHigNQRsJejUp8H2ee9CBBHvde33jIz4qi3eNJ750Ec9V7fesvMiKPe4knvnQdx1Ht96y0zczZHvQUXmod0ECCOSscXZIl1BIij1nGhWukgQByVji/IEusIEEet40K10kGAOCodX5Al1hHwFEetW0O1hIAlAsRRS0yoRloIEEel5Q+yxhIB4qglJlQjLQSIo9LyB1ljiQBx1BITqpEWAlLnqLTQIms8gQBx1BOo05iOIEAcdQQt0vUEAsRRT6BOYzqCAHHUEbRI1xMIEEc9gTqN6QgC3sJRR+ZMuvJCgDgqL3/5orXEUV/0urzmTByVl7980VriqC96XV5zJo7Ky1++aK2vcdQXfSz3ORNH5e5B77efOOr9Ppb7DImjcveg99tPHPV+H8t9hsRRuXvQ++0njlr3MdVKBwHiqHR8QZZYR4A4ah0XqpUOAsRR6fiCLLGOAHHUOi5UKx0EiKPS8QVZYh0B4qh1XOytJT3XI0AcdT3GNEL7ECCOtg8/au16BIijrseYRmgfAsTR9uFHrV2PAHHU9RjTCO1DgDjaPvzsbU16bUeAONp27KilexAgjroHZxql7QgQR9uOHbV0DwLEUffgTKO0HQHiaNuxo5buQYA46h6c7R2F9CwRII5aYkI10kKAOCotf5A1lggQRy0xoRppIUAclZY/yBpLBIijlphQjbQQII5Kyx/2WuNLesRRX/K2POdKHJWn33zJauKoL3lbnnMljsrTb75kNXHUl7wtz7kSR+XpN3ut9gY94qg3eNG750Ac9W7/esPsiKPe4EXvngNx1Lv96w2zI456gxe9ew7EUe/2r72zk7IecVTK3iHbOALEUY4CvaSMAHFUyt4h2zgCxFGOAr2kjABxVMreIds4AsRRjgK97EXAE3rEUU+gTmM6ggBx1BG0SNcTCEiIo1VV1ZDi4suQsz+dF3L0+EmrIq5CE008gRuN6T4EPM9R8MxEuJLLxSWXq6qrITYBqKishhSeOXf4aMH+734Aj9GPzVakIEcEPMlRsArstIeRNpGtqKg8cuzE3n3fok+byqQgLwQ8yVGtNlBeYJG1diPgTEVPcjQwMKBrl86REeGBAQFOmVP3a6+JjAx3SlfUiXQQ8BhHL1foIAACTAWxQFaI4CsoC8ElSJDWLvpi59S/by/0gCYnrtTiSOI1CHiMo6eKKiJW/Xf02z+8nnsm79TlpnwFZSEgnJB+fXpCWkf8phsHogl0DhbVFJbVoWBTbpq/TjExxYpMS01Y8tp727602UPbFI6cPKcYtZSPm/BMK6M0VfvzR7vaNpZ3tPIYRwFfJ7WiuqIm49ClR/559s6NRxM2Hv7N7qIXvr2ccbR864nKXWeqQDibi2LH6AgQFIsxOkSTwrJ6FOyVWmvKVbqdP56dtTpLMS0Vy7O9XTmkJ8at09toVFPHoKmzZqSNll512ZMcFUD6qZRhfizSX6lQ+50trthzrjzj2OU3CspeOVKakV++70INY8wqVxAGgJ1Ya6GAZRjMPldpcqdVfahdLUqFqaZSx0qrTaI3MLWKhQaw0qpJf9xgUnDum8o+2KODYzuGsqhgldI+fecaKZnepDh5VYAG+MRolB00ylC1FQujIsJw9xfshCYW3VUHy36paVyWqvVWWkHTulTqMn43IXfdY0Jm/Ko3qzZGtAHqnV8eR3bMeisX1/bveY1hS2r+O08bPkyZP3mki0fzWPf2DOyIL+3pz6k6v+j0pbWNzAM1r+3aGewUoSeGAjsRHuy5UAU247SNUqe/6boe8YN7C9m0Ym5s5zBTV/5+P5y+JMrIvC5J/7j3nBcV45IVCc8oxi9HRJv2j93iatPjlt15iGi52uhlCBjmr/0AwWVTBcsyFKBmFijgszFzxQZRgw5RA2lag3sF7FEgpDaOYhmzfnEwn5sBUxOemZr8JvRT3/50/toPIC9szEZvchFPcvTnWkNdXX11le5KHSuu0RtqTXud+mqdgG9whP+gCDXKCDcFNVHAqbiz35NzASEBTi0lQNnIbMurNmtu6dGRB4LQawgG4O+oe/5vzZavCi6W8ksIJfWGvJMXn3h1G1gLRbOAFpOS/77zyE8MbREzVOnScw4MmLqqFVqA/QPmrE3Pzkvfvj896+tnpsejt3KdIXPnIbRFTWHRFdRAeI1R7f1d32kffGnNx/9l9Xqm1bAq3cJXt4PB0BGC4Ub8Np2bEaBG6LL5q4JB89ZtzP1BjLL74EmhJoujxzga1yO8ZNmQjLk3Qv46tivk5bG90u/osj6+U8YdMVtHx7w1MnpWv+DB0f5mHEFNsXDO+vzCptMV5nrLgqCyZb09NVhvMr8pgF+5cp2+e6dIFEb8cSMLC2TGOBKBQfbzs6fE9UA9wtaCk5fM6xyWqJ15p1hkEENQW1Ub17MjK6vhZO0alrxu+459h3iT5i8MF/XQGhbiz0fUG868t8gcw/AatYppVMz8D6fgnFaT+VU+K6lgVbXsShWnKQwLC8zceQgQQffIyXMYjkUHc4MRZwdqWJi2oLC44FIZQ3N0AiX5iLs5CpeYwQkP0vQKU0PAVwjoiDIE9UIHiGNfD15isz9u6xlQ87Ufii/o9CJgFTpOOAaql7+1DfSCYCnSTljR2KefEnEhzIgNDxpzXVdwLvuPM++/e3jCsEEfrXyU8wOqGtUPhRfwDmakf/gfFuyPhRbKhs9e3J+2sGT7SobteXkN6p/5++dQaxQ/5eWaWixvvAYkq6k7/NbCRoLy2pZfVbXr548z7FlTsuNPcd2jOU2h6+/3fcFpvL+atYfFhKDAymsylkxCRAtZ/+TdnNO8VmYvt3IUzta+8PWwtV/P3XgoJesYMqOQt/ecFYIy5KW9RbiU+P5xpKLu+6Qw6Z+n0r67iM2+wNUedkYGODgptWpz3il+V805wNcn3DrBGIxXVJ6xaCLe8ZnB3mXH6nngHNiJWeDWj5spX/xwWamoq+NRymd5x1kQ3+2xCt26+bwhLqJt7prfoJ+MpfcuGXcraholQP3EWzv52obhSqsPv7EAn4fGq62U6vWx3SPFRgr9Pzt9hIl8SkVlRRXapf/7e754IwwI9scnCjUQrh+oRkF24qA72z0/5ETRx5Hi6pyTv7z77c+QDXkXuRwoyvyxBJL94897imoQmyIVBU3m7zCswdZSAbyrVl5wJzKRQrDm4QZaqctInmp2MJpie4RNkmL0sojRy0YkvZb8Rg6/b+JCg/yI1RQxKE6VipiOUXgXEj+4N/oRImoaj7jtgqA4D1TzxQ8Fe0Rv4BFzg2ZEeAgPLRpO+TtSacZup1zfjZ82vMb074I1vuFMNu+cox4x1s9PxUXj56dWcVEpFSqln8ZPpVJC2mNSuNrgWPPq2pWzRmYtn4FAE5KVMjP31ccNOavAKtEP4hPFtFRsj7BJ4jWB6jFDe69fNIGBCvy8yUtlxFNvsHfThs8GPhLoQK1CnIDlGUUniNoYwqqU3/1U0rS3gkulfH1tWiWHshFTORhqv424/dmvzDV19ZPjB08cGQdSQlDAysfrG15vbtvHLpVje4Swb93jCQg0cd/nt84KU/5BKHaJDDWvUoU/N5IDWSEswNjv4yg0TUfcsqNCsP1ixcb9X4R2xLIN+DyYrrbjDdGwsKQg/6KZ9ygUnLzEd1Ht6NkjTb2NowMjHI4NbOJ+9EyRaXNdoXv07mFC/8jJc8zfT5TFEURHJMrLQZqFaVt4gTGkORf+ZQcW4J2H+G5GVJqOVbWp0+IR4CZNGcKfGmANrtfPffF909V2vCXdM9RkSWTQiIVvYCMIGfHkXxhSE+3o1lNNvY2jSAs4Hcp+3aIZEqLoNzRgyeufYEFCFmnA0rdMOyTUGwU7nhljBmErzdQqPPFHnh+p026z1/L8JW6+lyrWPX63UfHqw+rfTmDioXyAOvNf36PzqzUcPMetYMytvbglaBgakPlVfubeoyAoshOogIQ0/3ShRsriPRy9Uls/LKYxmWoX6MgK4bFnTV1RWWUr+g+MvY1zFJqIGrPzsCAlPvGmSR+VdfofTxeJUzyjGoO8qbh3q1UFyEdipw8dpAhSZzaGENicoRKjG5shm5u14j5WVM5X0yBN4rKNpju+UBP0NWryO3iThqKO7+XRVfN6RCPPzYrnHaLbK1WxXcLPpM8LDQpAuCJayejoPRwdFO7v0CI66ebYpHE3JSXGJU0bGh2ibcVnCHCRWp8xrC+nSJ0+tmfUyoXjkHF8bvJQ3nz8zZEdgszNQY7sl+fwDD/S+KBOoGbxxF8dzliCSFfoBGsUGJE3nDIkMsKYxWQMK9/i2fG8EvZMuvXjz/cjM2BSm3Rrvy6mLIGpZvzN8YN7id5wxFMGU/2UIdqgxj9tSHl4vGHHn0pyVkGQO0PmNe/iL9CHxER1wFEu4ghHJTynMLXqnl6t8czSdrgw7anpQnCbtlRoWgMHY400bF+JDRP8/YcHE3G1aQ84NQtCTGT4uXLOKlB5ddK9TftHV2JQHKFpbgU11AgBofHBEGUczWooC+E7toaW6FxU4iiWauzSFMMXIU2GI7L66Aq6PIC+WMb3TDV1t/Xtihq5iJdwdG4fY/JcLqi72E4enGAIBJ3RwdgzIaUAGTBnLUJSfivwU+IzgOtyEW/g6LLBIQjp5IK4G+zEwpn7ehJ/+ISH9X7KnQcK+bcINCqGZxNB/mfeXuAGG5w4hOw5+vItHeASJyLiHV3hpo+wJPuFB1Y+8OvF9w5ZPGUoMrv82cSHKQg25DVHGXM0RqPcOjqGCNoK4RDIInRGpAtZMHUUiNuKsmQvyZKj9dW6mdcGvTUyWrKwkmFORMAVHHWieVd3BXaian18p1n9glFwohwsqoFcbv5404n9U1dtRkBmHJ03MBL3d4fyoDahST9Yqliff0PmGUjEhtOJ7x+3k6l44KS4eQFP8Yxe1ux459OKaanzm/+JyJbdecgEcbWbF6ChTascVUDav9j4c244omxujh29YtRSBUwavshcKa+CPDiqr60f373D5ruiHU2C2nTGS3uL5udeZBolF2hrlDvKVBEZZ1G0S0ID+KNOrabZMdifVenSs/MGTF2FVGVjP4FqroYmzPn/kPaPGrk8auLzOH5zvNF+/tjTT8m/WoDnsc4f1h09SpejhoY/b3q4T9jHYzslDQ51eoIJ683Teb8Idr44MOTAjG4JIfUcdZ3+g0OmPyHip/a86vU8s4PkDqS8hqfKA9Ssa9jCV7a6YtW0tCgoOJDFBLPIIBYd1PQqHinhQWhsx1A8HmtaL6OyL0hd7AAADLZJREFUUpq21tbU3Rkb9dJd12ZP7jF9UJjT2SlmfbxcIQpMp196W/TgaP+nb++KMli7/VRrT/BNrcxv9fox/bscfucpIVkpM81XWIj/ps/2N566vYSHT3gwJsTtgztnQClytLhGv/n+foI0zpllC7100zZwlDGxcL773WUQFDS9zsHv+OGWimeSQiaOjMteNs30tSO1aseBky2Mz6uxys5csUHEizxgHb7opvnr3mv+Sz5Y71/YmN17zotCAUeUzVEEHnJOTX7zuQ9yGWIJdBmkeX5jDvoUCqlvf4oyBDq4aBbE3PxPn8cvR288qp6WCk1UmhVQQM+IqvkfYQ9fxNVuX4zotv1fy0LPDoknOeqQoa5QRm71oe7Gp/wa5Yx9JdgtvVtoWj4T+4a2Z8TunSL5V6VsdZH2j90j5v4586t8Hi+CYZCwwLzColkvfWymFHijHf9s8t/+zb9FFeLPNYM0KC98LRs7M4xQVFa5OftQXv7PPMDAuUq589DpzJ2H+NdeGTtYcD5z71EMsXnPMVwUgg9GRMIza7Z8xU8jtKxzKALoZ9/fEzF+OXjJKxnbspvH0+k5B/hX92EYJDRg55GfEhdvALmFjnuOPs1RQLz2jiismihAsFsSi2jaiI6476OmzfLBrv0swI831xtu7BLBCxYvkO+JlZtZTAir1yNezH5+NoR/hV5vYGGBm3cdFnRZ/kYWw6YH27La+vWPJ+aue2z9vLH8K8yo/OkKWB4dok2affuYQdfyZ/EYpV4/5ZZeSdOGNn5xRK1iEOjjKmMYd0TSaxiCIWKu0MVGhUBYVS3fzwVpBjyZbtRik1LeQzzNlApchWG5ax/lv+CC3FyI/5r0f5396bxQc8PRpzm69UQlkk2cl2akdfrPJ3bB/sxcYVdBpdx87Dzup0JwI3424wvOADSuqp08fCDeLeX7gtNjRg2YEtcD9Pr3ygfxTAiy6blHOP+gHag+evoC3vflnzctkIw9PHYInhXNnzxy/ZN3PzfjtsWz+a9FIMBIe2o6/+59TR300XzhjFGoaemLIyvf3ca/na1SYpOHh6X57zwNyVg0kRWVc6aeL8UKCh6bGG/8+z4YhnE3rZi7eNowPm7SXeU6B/9ojFvWxpfvchQB6ITt50wE1elN+GmUPCRlTPHGCSRNIbvOVDF7/unqcD8VghsxQ/oJraprWVRwS1yB13esnvfRykdxxDN0rJpfHMyf93IGJxDaNsgdAxsWyAC1dlwKPgbvbfvyzrg+KQ+PxxNO8LVB0d73NZ9+wz8/WLx7RoF8ohmMzPrTA9jtZb0yt9+1MYiCeHSLZIVahUkhqMD9Hdz93cShYlx8MERDNxx9lKNYJ2bsvmQiKGPIOiH3JG76CEnnbD3HoUfSlLGhUQpetvmCO7GMCcENERmoovIZw/pWblzaSlPk2+F7xcQUxfBFAx5Yg1tw5u7D/L7cpE3yQ3ezMC3/Tb/aetAXjJn1ypYBD/8/NjrgaxNFu4qYOBZarqo3JNzQkxcaXhNHxgkR/MP9nZ0vNe38qnQIXielbuo2Y7Vi5O/xIWlo5I53H+VozgnT3gi8/HxsZ0SfSCMkRBrvX1hKz1dz7HX6F+M62JX2qtfHdY+GU/k6lDIza8V9ua8+XpKzCjfHVppj4RS/IYV4lPOyc4ekKUPWzR/L/8CDD296YUkzfJiCm3LS6BtYoAY3aP7X9HgQ0DUs84sjbaCpqV98qEwl629YYktyV6+fPw7RCB8RHzw/JUP+NSxwVsomd+7u5cBR6xg6rbZ7iJ/oK/u+PqJgOmqUIK6pbOutV5gWThXrEI64j4NbrTda8e4OFhbIb7sVOnAaREQQOebmfqzaGFY2NMbKBxlxYx9chQ6oD76aLgb7Z27NQ2bKdGrHG7dKbOYskmK4oSOShiDPhZ4waIBSjwgY0Yhh+8ozmUtWzhpp+vzEhLz56X+g4x7xUY7279Twdz8aZdI/T524UgtPr/7yUjPQdfqDRTXNapx68s2pi9g18y41KnCaFxj7LO8406hEWRwjjL+Mor19qchGgWT4MCT9+nrTnkYoiSMSAihoVF98l493zAhHS0lKjONUUykLCovNd20kR1lJBSLpgmMX4m/sjTU+4sYF2tHJ2lsXiyUTEfMfHkxk4u9jLTt1ZY1bOQp8XTkXB/rGzf0urYl/SDnF/r1Q+9ezv9/f/PmnRnlD5hksJw7064jqLT068nuosQmiUmyYkEh6Im07zwEZK8WBb96DNEgDbf5PPu7sYBWU07fv5+FBdS0yAyKcwEbHxNoAdXLGbkSrS17/RPRw1fH5xyYx3Lhxrw8NQGjLo+Fxyc9m7uX7PL0htm8MPjA8JO0Vzpf52MjEFe+9sDEb4yKBz7Oz6K60uqVkBS46XdzKUVif2EMqf5H4wYw+sAfxKD9ieyREp7/Lr+rl60NN9YwhOdUaTbFJwua9qrYMBd5Rqy/kIKHcoLnioQR2oYwTS63CjgQbJqRLY7tF8J/oMaqdLS5Fd9i8x3YJ52Gov1/mvmOzVmfxnx1Vq/guKjSQ56qgxBhYFdu7I69EW+SVELAa67lhGBGVOBprsFIc/tti06/5+fvxaFip4Omt0moW5P912lPM+O/w60+ykkpujEqZ/O4usBmPBrgy9oJ3XY88gFHLHQd3c3TBiK6nykwLmDvm1/IYcJXhsV6ZI6NM3yNh7KHOAZ+Muybn4YFLhke9fFMYdvrYM0H+eoBzxbInJM+xyPF84ZShE4ZfZ6nQtCYiPMSkPDseDXEJrDr80TKeGMdOKDRwzNDeGakzkapcfO8Q3uf9t0NHCCqzUu+HJv+BaZAvTIt9jPjRRsxC6OAINeRNcSuHZtKEW0QOH4YtnjL0qg4xdOUnK7AfiuvZke/DAjV4dnBVh9BB7Lvu8QRcYhFBLNgfo6Pz3NeTsBfEcG4Td3M0rkf4I9dHuW16NgeaPigMWyWQFfLOPdeYv/sHmmLDJARlq/3Ai1jkRL7QZp4SN1CzMhqKDlGAv7ETgiBLKhYns1rTPrEPgyZYaNiSCmXsY4Sy6Md8RJO0p6ZDE0ehgBpzh2Y1FBAh4NL+tIXoDWIeHZfMEh6kWTB1FC5BwWD8cf60p6ZjImYF9xTczVHM6vnJ/Uf37JB/ubKurh6nzhPqyTsR8ABHAWTqpL7bHxzYPzKgTldXV1tfh/gdtYzVNxSMZ3QgBDgCnuEoRsZNf8ODg7Y/dsPv47uO6hLUQ8stEf95Q159IBRICAGBAGeGKLnniKRdU0GWeHS/UCyr4Ou22X32zuFS+UhX1JvV3GMYjSJZBNzKUdDOKhCoh1i9hEpcgqBA4psIuJWj2Eu2WXzTPTRrIOBWjmI8KQjZIC8EiKPy8pcvWksc9UWvy2vOxFF5+csXrSWO+qLX5TVn4qi8/OWL1hJHW/Y6XZEGAsRRafiBrGgZAeJoy9jQFWkgQByVhh/IipYRII62jA1dkQYCxFFp+IGsaBkB4mjL2Nh7hfRciwBx1LX4Uu/tR4A42n4MqQfXIkAcdS2+1Hv7ESCOth9D6sG1CBBHXYsv9d5+BIij7cfQ3h5Ir20IEEfbhhu1ch8CxFH3YU0jtQ0B4mjbcKNW7kOAOOo+rGmktiFAHG0bbtTKfQgQR92Htb0jkV5zBIijzfGgM+khQByVnk/IouYIEEeb40Fn0kOAOCo9n5BFzREgjjbHg86khwBxVHo+sdciX9EjjvqKp+U7T+KofH3nK5YTR33F0/KdJ3FUvr7zFcuJo77iafnOkzgqX9/Za7nc9Yijcveg99tPHPV+H8t9hsRRuXvQ++0njnq/j+U+Q+Ko3D3o/fYTR73fx/bOUKp6xFGpeobsakCAONqABL1LFQHiqFQ9Q3Y1IEAcbUCC3qWKAHFUqp4huxoQII42IEHv9iLgbj3iqLsRp/EcRYA46ihipO9uBIij7kacxnMUAeKoo4iRvrsRII66G3Eaz1EEiKOOIkb69iLgLD3iqLOQpH5chQBx1FXIUr/OQoA46iwkqR9XIUAcdRWy1K+zECCOOgtJ6sdVCBBHXYUs9WsvArb0iKO2EKLrnkaAOOppD9D4thAgjtpCiK57GgHiqKc9QOPbQoA4agshuu5pBIijnvYAjW8LgQaO2tKj64SApxAgjnoKeRrXXgSIo/YiRXqeQoA46inkaVx7ESCO2osU6XkKAeKop5Cnce1FwFGO2tsv6RECzkKAOOosJKkfVyFAHHUVstSvsxAgjjoLSerHVQgQR12FLPXrLASIo85CkvpxFQKu4qir7KV+fQ8B4qjv+VxuMyaOys1jvmcvcdT3fC63GRNH5eYx37OXOOp7PpfbjD3NUbnhRfa6H4H/AQAA//8qqt61AAAABklEQVQDAAtOvtTgn9leAAAAAElFTkSuQmCC" alt="Packing & Plastics" style="height:42px"><span>Área de Rebobinado</span></div>
   <div style="display:flex;align-items:center;gap:16px">
     <span id="fecha-txt"></span>
     <div id="clock">00:00:00</div>
@@ -262,6 +263,7 @@ tbody td{padding:7px 8px;white-space:nowrap;}
   <div class="tab on"  data-pg="reg"  onclick="goTab(this)">📋 Registrar</div>
   <div class="tab"     data-pg="hist" onclick="goTab(this)">📊 Historial</div>
   <div class="tab"     data-pg="avance" onclick="goTab(this)">⚡ Avance Turno</div>
+  <div class="tab"     data-pg="merma"  onclick="goTab(this)">⚖ Merma</div>
   <div class="tab"     data-pg="mermas" onclick="goTab(this)">⚠️ Mermas</div>
   <div class="tab"     data-pg="pers"   onclick="goTab(this)">👤 Personal</div>
   <div class="tab"     data-pg="config" onclick="goTab(this)">⚙️ Config</div>
@@ -573,6 +575,97 @@ tbody td{padding:7px 8px;white-space:nowrap;}
 
   <!-- SECCIONES POR CATEGORÍA -->
   <div id="av-secciones"></div>
+</div>
+
+<!-- ═══ MERMA DIARIA ═══ -->
+<div class="pg" id="pg-merma">
+  <div style="height:14px"></div>
+
+  <!-- KPIs -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div class="card" style="text-align:center;padding:12px;border-color:#0077b655">
+      <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#0077b6;margin-bottom:4px">📅 FECHA</div>
+      <div style="font-size:14px;font-weight:800;color:#0077b6" id="mkg-fecha">—</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:9px;font-weight:700;color:var(--mut2);margin-bottom:4px">📋 MERMA TEÓRICA</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:#0077b6" id="mkg-teorica">0</div>
+      <div style="font-size:9px;color:var(--mut)">KG (de registros)</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:9px;font-weight:700;color:var(--mut2);margin-bottom:4px">⚖ MERMA REAL</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--warn)" id="mkg-real">0</div>
+      <div style="font-size:9px;color:var(--mut)">KG (pesado)</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:9px;font-weight:700;color:var(--mut2);margin-bottom:4px">📊 DIFERENCIA</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900" id="mkg-diff">0</div>
+      <div style="font-size:9px;color:var(--mut)">KG</div>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE REGISTRO DE MERMA REAL -->
+  <div class="card" style="padding:14px;margin-bottom:14px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#0077b6;margin-bottom:12px">⚖ REGISTRAR MERMA REAL DEL TURNO</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="fl">
+        <label>Fecha</label>
+        <input type="date" id="mk-fecha" style="width:100%">
+      </div>
+      <div class="fl">
+        <label>Turno</label>
+        <select id="mk-turno" style="width:100%">
+          <option value="DIA">☀️ DÍA (7am-7pm)</option>
+          <option value="NOCHE">🌙 NOCHE (7pm-7am)</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label>Área</label>
+        <select id="mk-area" style="width:100%">
+          <option value="REBOBINADO">REBOBINADO</option>
+          <option value="COLINES">COLINES</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label>Encargado</label>
+        <input type="text" id="mk-encargado" placeholder="Nombre encargado" style="width:100%">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="fl">
+        <label>Merma Teórica (KG) <span style="color:var(--teal);font-size:9px">AUTO</span></label>
+        <input type="number" id="mk-teorica" placeholder="0.00" readonly style="width:100%;background:var(--bg2)">
+      </div>
+      <div class="fl">
+        <label>Merma Real Pesada (KG)</label>
+        <input type="number" id="mk-real" placeholder="0.00" step="0.01" oninput="calcMerma()" style="width:100%">
+      </div>
+      <div class="fl">
+        <label>Diferencia (KG)</label>
+        <input type="number" id="mk-diferencia" placeholder="0.00" readonly style="width:100%;background:var(--bg2)">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" onclick="calcMermaTeórica()">🔄 Calcular Teórica del turno</button>
+      <button class="btn" onclick="guardarMerma()" style="background:#22c55e">💾 Guardar Merma</button>
+    </div>
+  </div>
+
+  <!-- HISTORIAL DE MERMAS -->
+  <div class="card" style="padding:14px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#0077b6;margin-bottom:10px">📋 HISTORIAL DE MERMA — COMPARATIVO</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Fecha</th><th>Turno</th><th>Área</th><th>Encargado</th>
+          <th class="td-n">Teórica (KG)</th><th class="td-n">Real (KG)</th>
+          <th class="td-n">Diferencia</th><th class="td-n">% Desv.</th><th>Estado</th>
+        </tr></thead>
+        <tbody id="mk-body"></tbody>
+      </table>
+      <div id="mk-empty" class="empty">Sin registros de merma aún.</div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ MERMAS ═══ -->
@@ -1579,6 +1672,96 @@ function renderSeccionesEspejo(secciones){
   cont.innerHTML = html;
 }
 
+function calcMermaTeórica(){
+  // Suma la merma teórica de los registros del turno seleccionado
+  const fecha = document.getElementById('mk-fecha').value;
+  const turno = document.getElementById('mk-turno').value;
+  const area  = document.getElementById('mk-area').value;
+
+  if(!fecha){ toast('Selecciona una fecha','warn'); return; }
+
+  // Convertir fecha input (YYYY-MM-DD) a ddmmyyyy para comparar con registros
+  const [y,m,d] = fecha.split('-');
+  const fechaFmt = d+'/'+m+'/'+y;
+
+  // Buscar en historial o en registros locales
+  const fuente = window._historialRebobinado || registros;
+  const filtrados = fuente.filter(r=>{
+    const mismaFecha = (r.fecha||'') === fechaFmt;
+    const mismoTurno = (r.turno||'').toUpperCase() === turno;
+    return mismaFecha && mismoTurno;
+  });
+
+  const sumaMerma = filtrados.reduce((s,r)=>{
+    return s + (Number(r.mTucoCol)||0) + (Number(r.mPesoBajo)||0) + (Number(r.mPesoAlto)||0) +
+           (Number(r.mVarEsp)||0) + (Number(r.mSaldoBob)||0) + (Number(r.mRolHueco)||0) +
+           (Number(r.mRolAire)||0) + (Number(r.mRolArr)||0) + (Number(r.mTucoArq)||0);
+  }, 0);
+
+  document.getElementById('mk-teorica').value = sumaMerma.toFixed(2);
+  document.getElementById('mkg-teorica').textContent = sumaMerma.toFixed(2);
+  calcMerma();
+  toast('Merma teórica calculada: '+sumaMerma.toFixed(2)+' KG','ok');
+}
+
+function calcMerma(){
+  const teorica = parseFloat(document.getElementById('mk-teorica').value)||0;
+  const real    = parseFloat(document.getElementById('mk-real').value)||0;
+  const diff    = real - teorica;
+  document.getElementById('mk-diferencia').value = diff.toFixed(2);
+  document.getElementById('mkg-real').textContent = real.toFixed(2);
+  document.getElementById('mkg-diff').textContent = diff.toFixed(2);
+  document.getElementById('mkg-fecha').textContent = document.getElementById('mk-fecha').value || '—';
+  const diffEl = document.getElementById('mkg-diff');
+  diffEl.style.color = diff > 0 ? 'var(--red)' : (diff < 0 ? 'var(--green)' : 'var(--txt)');
+}
+
+function guardarMerma(){
+  const fecha     = document.getElementById('mk-fecha').value;
+  const turno     = document.getElementById('mk-turno').value;
+  const area      = document.getElementById('mk-area').value;
+  const encargado = document.getElementById('mk-encargado').value;
+  const teorica   = parseFloat(document.getElementById('mk-teorica').value)||0;
+  const real      = parseFloat(document.getElementById('mk-real').value)||0;
+
+  if(!fecha || !real){ toast('Completa fecha y merma real','warn'); return; }
+
+  const diff = real - teorica;
+  const pct  = teorica > 0 ? ((diff/teorica)*100).toFixed(1)+'%' : '—';
+  const estado = Math.abs(diff) <= teorica*0.05 ? 'OK' : (diff > 0 ? 'EXCESO' : 'BAJO');
+
+  const reg = { fecha, turno, area, encargado, teorica, real, diff, pct, estado, ts: Date.now() };
+
+  // Guardar en localStorage
+  const hist = JSON.parse(localStorage.getItem('reb5_merma_hist')||'[]');
+  hist.unshift(reg);
+  localStorage.setItem('reb5_merma_hist', JSON.stringify(hist));
+
+  renderMermaHist();
+  toast('✔ Merma guardada','ok');
+
+  // Limpiar campos
+  document.getElementById('mk-real').value = '';
+  document.getElementById('mk-diferencia').value = '';
+}
+
+function renderMermaHist(){
+  const hist = JSON.parse(localStorage.getItem('reb5_merma_hist')||'[]');
+  const tbody = document.getElementById('mk-body');
+  document.getElementById('mk-empty').style.display = hist.length ? 'none' : 'block';
+  tbody.innerHTML = hist.map(r=>`<tr>
+    <td>${r.fecha}</td>
+    <td><span class="bdg ${r.turno==='DIA'?'b-dia':'b-noche'}">${r.turno}</span></td>
+    <td>${r.area}</td>
+    <td class="td-s">${r.encargado||'—'}</td>
+    <td class="td-n">${Number(r.teorica).toFixed(2)}</td>
+    <td class="td-n">${Number(r.real).toFixed(2)}</td>
+    <td class="td-n" style="color:${Number(r.diff)>0?'var(--red)':'var(--green)'}">${Number(r.diff).toFixed(2)}</td>
+    <td class="td-n">${r.pct}</td>
+    <td><span class="bdg ${r.estado==='OK'?'b-ok':'b-pend'}">${r.estado}</span></td>
+  </tr>`).join('');
+}
+
 function filtrarAvance(q){
   if(!window._consolidadoData) return;
   q = q.toLowerCase();
@@ -1885,11 +2068,15 @@ if(_cache.length > 0){
 // Luego intentar conectar al MPS para actualizar
 renderMaqSelect();
 renderOperSelect();
+renderMermaHist();
 const _bomCache = JSON.parse(localStorage.getItem('reb5_bom_cache')||'null');
 if(_bomCache) window.BOM_DATA_LIVE = _bomCache;
 cargarMPS(false);
 cargarBaseDatos();
 cargarBOMLive();
+  // Inicializar fecha del módulo de merma con hoy
+  const mkFecha = document.getElementById('mk-fecha');
+  if(mkFecha) mkFecha.value = new Date().toISOString().split('T')[0];
 
 /* ══════════════════════════════════════════
    IMPRIMIR PDF — Formato FSIG-PK0011
