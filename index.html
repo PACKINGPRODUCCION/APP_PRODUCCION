@@ -627,7 +627,9 @@ tbody td{padding:7px 8px;white-space:nowrap;}
       </div>
       <div class="fl">
         <label>Encargado</label>
-        <input type="text" id="mk-encargado" placeholder="Nombre encargado" style="width:100%">
+        <select id="mk-encargado" style="width:100%">
+          <option value="">— Seleccionar —</option>
+        </select>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
@@ -760,10 +762,31 @@ tbody td{padding:7px 8px;white-space:nowrap;}
   <div class="card">
     <div class="ch"><span class="n">O</span>Operarios / Maquinistas</div>
 
-    <button class="btn" onclick="cargarBaseDatos();toast('Actualizando desde Sheets...','ok')" 
-      style="background:#0077b6;font-size:11px;padding:7px 14px">
-      🔄 Actualizar desde Google Sheets
-    </button>
+    <div style="font-size:11px;color:var(--mut2);margin-bottom:10px">
+      Si el operario no está registrado, ingrésalo aquí para que pueda avanzar con su producción. El supervisor lo agrega al Google Sheets después.
+    </div>
+    <div class="fg c2" style="margin-bottom:10px">
+      <div class="fl">
+        <label>DNI</label>
+        <input type="text" id="new-oper-dni" placeholder="Ej: 43032252" maxlength="8"
+          oninput="verificarDNIConfig(this.value)">
+      </div>
+      <div class="fl">
+        <label>Nombre completo</label>
+        <input type="text" id="new-oper-nombre" placeholder="Se autocompleta o escribe manualmente">
+      </div>
+    </div>
+    <div id="oper-dni-msg" style="font-size:11px;margin-bottom:8px"></div>
+    <div id="oper-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" onclick="addOperTemporal()" style="background:#22c55e">
+        ✚ Registrar temporal
+      </button>
+      <button class="btn" onclick="cargarBaseDatos();renderConfig();toast('Actualizado','ok')"
+        style="background:#0077b6;font-size:11px">
+        🔄 Actualizar desde Google Sheets
+      </button>
+    </div>
   </div>
 </div>
 
@@ -939,6 +962,7 @@ function cargarBaseDatos(){
     renderAsistentes();
     renderMaqSelect();
     renderOperSelect();
+    renderMermaEncargados();
   };
   const s = document.createElement('script');
   s.id = '_bd_jsonp';
@@ -1770,6 +1794,15 @@ function guardarMerma(){
   // Limpiar campos
   document.getElementById('mk-real').value = '';
   document.getElementById('mk-diferencia').value = '';
+}
+
+function renderMermaEncargados(){
+  const sel = document.getElementById('mk-encargado');
+  if(!sel) return;
+  const sups = asistentes.length ? asistentes : 
+    JSON.parse(localStorage.getItem('reb5_asist')||'[]');
+  sel.innerHTML = '<option value="">— Seleccionar —</option>' +
+    sups.map(s=>`<option value="${s}">${s}</option>`).join('');
 }
 
 function renderMermaHist(){
