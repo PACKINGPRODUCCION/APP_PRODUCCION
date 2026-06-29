@@ -8,19 +8,20 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;500;600&display=swap');
 :root{
-  --bg:#f0f4f8;--sur:#ffffff;--card:#ffffff;--bor:#d0dce8;
-  --gold:#0077b6;--teal:#0096c7;--blue:#0077b6;
+  --bg:#0f1923;--sur:#162030;--card:#1a2a3c;--bor:#1e3a5a;
+  --gold:#00b4d8;--teal:#00b4d8;--blue:#0096c7;
   --red:#ef4444;--green:#22c55e;--warn:#f59e0b;
-  --txt:#1a2a3a;--mut:#7a8fa6;--mut2:#4a6080;
-  --bg2:#eaf2fb;--ok:#22c55e;
+  --txt:#e8f0fe;--mut:#5a7a9a;--mut2:#8aaac8;
+  --bg2:#162030;--ok:#22c55e;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:#eef3f8;color:#1a2a3a;font-family:'Barlow',sans-serif;font-size:14px;}
+body{background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:14px;}
 
 /* TOPBAR */
-.topbar{background:#ffffff;border-bottom:3px solid #0077b6;height:60px;
+.topbar{background:linear-gradient(135deg,#0a1628 0%,#162030 100%);
+  border-bottom:2px solid #00b4d8;height:60px;
   padding:0 20px;display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:300;box-shadow:0 2px 8px rgba(0,119,182,.15);}
+  position:sticky;top:0;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.4);}
 .logo{display:flex;align-items:center;gap:10px;}
 .logo img{height:40px;}
 .logo span{color:var(--mut2);font-weight:400;font-size:12px;margin-left:6px;}
@@ -56,8 +57,8 @@ body{background:#eef3f8;color:#1a2a3a;font-family:'Barlow',sans-serif;font-size:
 .st.green .v{color:var(--green);}.st.red .v{color:var(--red);}
 
 /* CARD */
-.card{background:#ffffff;border:1px solid #d0dce8;border-radius:12px;
-  padding:18px 20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,119,182,.08);}
+.card{background:var(--card);border:1px solid var(--bor);border-radius:12px;
+  padding:18px 20px;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,.3);}
 .ch{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;
   letter-spacing:3px;text-transform:uppercase;color:var(--gold);
   display:flex;align-items:center;gap:8px;
@@ -248,6 +249,7 @@ tbody td{padding:7px 8px;white-space:nowrap;}
   }
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -264,6 +266,7 @@ tbody td{padding:7px 8px;white-space:nowrap;}
   <div class="tab"     data-pg="hist" onclick="goTab(this)">📊 Historial</div>
   <div class="tab"     data-pg="avance" onclick="goTab(this)">⚡ Avance Turno</div>
   <div class="tab"     data-pg="merma"  onclick="goTab(this)">⚖ Merma</div>
+  <div class="tab"     data-pg="paradas" onclick="goTab(this)">🛑 Paradas</div>
   <div class="tab"     data-pg="mermas" onclick="goTab(this)">⚠️ Mermas</div>
   <div class="tab"     data-pg="config" onclick="goTab(this)">⚙️ Config</div>
 </nav>
@@ -459,47 +462,125 @@ tbody td{padding:7px 8px;white-space:nowrap;}
     <input type="hidden" id="f-tinsrv" value="0">
     <input type="hidden" id="f-treutil" value="0">
 
-    <!-- MERMA -->
-    <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin:14px 0 8px">⚠️ Merma — cada motivo tiene su propio KG</div>
+    <!-- MERMA: 4 filas selector + KG -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin:14px 0 8px">⚠️ Merma — máx. 4 motivos</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <div class="fl"><label>V — Tuco Colapsado (kg)</label>
-        <input type="number" id="m-tuco-col" placeholder="0" step="0.01" min="0"></div>
-      <div class="fl"><label>W — Peso Bajo (kg)</label>
-        <input type="number" id="m-peso-bajo" placeholder="0" step="0.01" min="0"></div>
-      <div class="fl"><label>X — Peso Alto (kg)</label>
-        <input type="number" id="m-peso-alto" placeholder="0" step="0.01" min="0"></div>
-      <div class="fl"><label>Y — Variación de espesor (kg)</label>
-        <input type="number" id="m-var-esp" placeholder="0" step="0.01" min="0"></div>
-      <div class="fl"><label>Z — Saldo de Bobina (kg)</label>
-        <input type="number" id="m-saldo-bob" placeholder="0" step="0.01" min="0"></div>
-      <div class="fl"><label>AA — Rollos Con Hueco (kg)</label>
-        <input type="number" id="m-rol-hueco" placeholder="0" step="0.01" min="0"></div>
-      <div class="fl"><label>AB — Rollos Con Aire (kg)</label>
-        <input type="number" id="m-rol-aire" placeholder="0" step="0.01" min="0"></div>
-      <div class="fl"><label>AC — Rollos Con Arrugas (kg)</label>
-        <input type="number" id="m-rol-arr" placeholder="0" step="0.01" min="0"></div>
-      <div class="fl"><label>AD — Tucos Arqueados (kg)</label>
-        <input type="number" id="m-tuco-arq" placeholder="0" step="0.01" min="0"></div>
+      <!-- Fila 1 -->
+      <div class="fl"><label>Motivo 1</label>
+        <select id="ms-1" onchange="syncMerma()">
+          <option value="">— Sin merma —</option>
+          <option value="m-tuco-col">Tuco Colapsado</option>
+          <option value="m-peso-bajo">Peso Bajo</option>
+          <option value="m-peso-alto">Peso Alto</option>
+          <option value="m-var-esp">Variación de espesor</option>
+          <option value="m-saldo-bob">Saldo de Bobina</option>
+          <option value="m-rol-hueco">Rollos Con Hueco</option>
+          <option value="m-rol-aire">Rollos Con Aire</option>
+          <option value="m-rol-arr">Rollos Con Arrugas</option>
+          <option value="m-tuco-arq">Tucos Arqueados</option>
+        </select>
+      </div>
+      <div class="fl"><label>KG</label>
+        <input type="number" id="mk-1" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
+      <!-- Fila 2 -->
+      <div class="fl"><label>Motivo 2</label>
+        <select id="ms-2" onchange="syncMerma()">
+          <option value="">— Sin merma —</option>
+          <option value="m-tuco-col">Tuco Colapsado</option>
+          <option value="m-peso-bajo">Peso Bajo</option>
+          <option value="m-peso-alto">Peso Alto</option>
+          <option value="m-var-esp">Variación de espesor</option>
+          <option value="m-saldo-bob">Saldo de Bobina</option>
+          <option value="m-rol-hueco">Rollos Con Hueco</option>
+          <option value="m-rol-aire">Rollos Con Aire</option>
+          <option value="m-rol-arr">Rollos Con Arrugas</option>
+          <option value="m-tuco-arq">Tucos Arqueados</option>
+        </select>
+      </div>
+      <div class="fl"><label>KG</label>
+        <input type="number" id="mk-2" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
+      <!-- Fila 3 -->
+      <div class="fl"><label>Motivo 3</label>
+        <select id="ms-3" onchange="syncMerma()">
+          <option value="">— Sin merma —</option>
+          <option value="m-tuco-col">Tuco Colapsado</option>
+          <option value="m-peso-bajo">Peso Bajo</option>
+          <option value="m-peso-alto">Peso Alto</option>
+          <option value="m-var-esp">Variación de espesor</option>
+          <option value="m-saldo-bob">Saldo de Bobina</option>
+          <option value="m-rol-hueco">Rollos Con Hueco</option>
+          <option value="m-rol-aire">Rollos Con Aire</option>
+          <option value="m-rol-arr">Rollos Con Arrugas</option>
+          <option value="m-tuco-arq">Tucos Arqueados</option>
+        </select>
+      </div>
+      <div class="fl"><label>KG</label>
+        <input type="number" id="mk-3" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
+      <!-- Fila 4 -->
+      <div class="fl"><label>Motivo 4</label>
+        <select id="ms-4" onchange="syncMerma()">
+          <option value="">— Sin merma —</option>
+          <option value="m-tuco-col">Tuco Colapsado</option>
+          <option value="m-peso-bajo">Peso Bajo</option>
+          <option value="m-peso-alto">Peso Alto</option>
+          <option value="m-var-esp">Variación de espesor</option>
+          <option value="m-saldo-bob">Saldo de Bobina</option>
+          <option value="m-rol-hueco">Rollos Con Hueco</option>
+          <option value="m-rol-aire">Rollos Con Aire</option>
+          <option value="m-rol-arr">Rollos Con Arrugas</option>
+          <option value="m-tuco-arq">Tucos Arqueados</option>
+        </select>
+      </div>
+      <div class="fl"><label>KG</label>
+        <input type="number" id="mk-4" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
     </div>
-    <input type="hidden" id="f-mkg" value="0">
+
+    <!-- Hidden fields compatibilidad -->
+    <input type="hidden" id="m-tuco-col"  value="0">
+    <input type="hidden" id="m-peso-bajo" value="0">
+    <input type="hidden" id="m-peso-alto" value="0">
+    <input type="hidden" id="m-var-esp"   value="0">
+    <input type="hidden" id="m-saldo-bob" value="0">
+    <input type="hidden" id="m-rol-hueco" value="0">
+    <input type="hidden" id="m-rol-aire"  value="0">
+    <input type="hidden" id="m-rol-arr"   value="0">
+    <input type="hidden" id="m-tuco-arq"  value="0">
+    <input type="hidden" id="f-mkg"       value="0">
     <input type="hidden" id="f-mkg-color" value="0">
-    <input type="hidden" id="f-mtipo" value="">
+    <input type="hidden" id="f-mtipo"     value="">
+    <input type="hidden" id="cc-arrugas"  value="">
+    <input type="hidden" id="cc-aire"     value="">
+    <input type="hidden" id="cc-caja"     value="">
+    <input type="hidden" id="cc-peso"     value="">
+    <input type="hidden" id="cc-centro"   value="">
 
-    <!-- checkboxes ocultos para compatibilidad -->
-    <input type="hidden" id="cc-arrugas" value="">
-    <input type="hidden" id="cc-aire" value="">
-    <input type="hidden" id="cc-caja" value="">
-    <input type="hidden" id="cc-peso" value="">
-    <input type="hidden" id="cc-centro" value="">
-
-    <!-- OBSERVACIÓN -->
-    <div class="fg c1">
-      <div class="fl"><label>Observación / Paradas</label>
-        <textarea id="f-obs" placeholder="Velocidad, incidencias, paradas, cambio de bobina..."></textarea>
+    <!-- PARADA -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--warn);margin:14px 0 8px">🛑 Parada del turno</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="fl"><label>H. Inicio parada</label>
+        <input type="time" id="par-hi-reg"></div>
+      <div class="fl"><label>H. Fin parada</label>
+        <input type="time" id="par-hf-reg"></div>
+      <div class="fl"><label>Motivo parada</label>
+        <select id="par-mot-reg">
+          <option value="">— Sin parada —</option>
+          <option>Falta de material</option>
+          <option>Falla mecánica</option>
+          <option>Cambio de bobina</option>
+          <option>Mantenimiento</option>
+          <option>Falla eléctrica</option>
+          <option>Cambio de formato</option>
+          <option>Limpieza</option>
+          <option>Sin operario</option>
+          <option>Otro</option>
+        </select>
+      </div>
+      <div class="fl"><label>Observación</label>
+        <textarea id="f-obs" placeholder="Detalle adicional..." rows="2"></textarea>
       </div>
     </div>
 
-    <button class="btn btn-stop" onclick="parar()">⏹ REGISTRAR PARADA Y GUARDAR</button>
+    <button class="btn btn-stop" onclick="parar()">⏹ REGISTRAR Y GUARDAR</button>
   </div>
 </div><!-- /pg-reg -->
 
@@ -652,6 +733,12 @@ tbody td{padding:7px 8px;white-space:nowrap;}
     </div>
   </div>
 
+  <!-- GRÁFICO MERMA -->
+  <div class="card" style="padding:14px;margin-bottom:14px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--teal);margin-bottom:10px">📊 COMPARATIVO MERMA TEÓRICA VS REAL</div>
+    <canvas id="merma-chart" height="120"></canvas>
+  </div>
+
   <!-- HISTORIAL DE MERMAS -->
   <div class="card" style="padding:14px">
     <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#0077b6;margin-bottom:10px">📋 HISTORIAL DE MERMA — COMPARATIVO</div>
@@ -665,6 +752,93 @@ tbody td{padding:7px 8px;white-space:nowrap;}
         <tbody id="mk-body"></tbody>
       </table>
       <div id="mk-empty" class="empty">Sin registros de merma aún.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PARADAS ═══ -->
+<div class="pg" id="pg-paradas">
+  <div style="height:14px"></div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+    <div class="card" style="text-align:center;padding:12px;border-color:rgba(239,68,68,.4)">
+      <div style="font-size:9px;font-weight:700;color:#ef4444;margin-bottom:4px">🛑 PARADAS HOY</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:#ef4444" id="par-count">0</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:9px;font-weight:700;color:var(--mut2);margin-bottom:4px">⏱ TIEMPO TOTAL</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--warn)" id="par-tiempo">0 min</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:9px;font-weight:700;color:var(--mut2);margin-bottom:4px">🏭 MÁQUINA MÁS AFECTADA</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--txt)" id="par-maq">—</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:14px;margin-bottom:14px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--teal);margin-bottom:12px">🛑 REGISTRAR PARADA</div>
+    <div class="fg c2" style="margin-bottom:10px">
+      <div class="fl">
+        <label>Máquina</label>
+        <select id="par-maq-sel" style="width:100%">
+          <option value="">— Seleccionar —</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label>Turno</label>
+        <select id="par-turno" style="width:100%">
+          <option value="DIA">☀️ DÍA</option>
+          <option value="NOCHE">🌙 NOCHE</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg c2" style="margin-bottom:10px">
+      <div class="fl">
+        <label>H. Inicio parada</label>
+        <input type="time" id="par-hinicio" style="width:100%">
+      </div>
+      <div class="fl">
+        <label>H. Fin parada</label>
+        <input type="time" id="par-hfin" style="width:100%">
+      </div>
+    </div>
+    <div class="fg c2" style="margin-bottom:12px">
+      <div class="fl">
+        <label>Motivo</label>
+        <select id="par-motivo" style="width:100%">
+          <option value="">— Seleccionar motivo —</option>
+          <option>Falta de material</option>
+          <option>Falla mecánica</option>
+          <option>Cambio de bobina</option>
+          <option>Mantenimiento</option>
+          <option>Falla eléctrica</option>
+          <option>Cambio de formato</option>
+          <option>Limpieza</option>
+          <option>Sin operario</option>
+          <option>Otro</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label>Observación</label>
+        <input type="text" id="par-obs" placeholder="Detalle adicional...">
+      </div>
+    </div>
+    <button class="btn" onclick="guardarParada()" style="background:#ef4444;padding:10px 20px">
+      🛑 Registrar Parada
+    </button>
+  </div>
+
+  <div class="card" style="padding:14px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--teal);margin-bottom:10px">📋 PARADAS DEL DÍA</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Turno</th><th>Máquina</th><th>H.Inicio</th><th>H.Fin</th>
+          <th class="td-n">Minutos</th><th>Motivo</th><th>Observación</th>
+        </tr></thead>
+        <tbody id="par-body"></tbody>
+      </table>
+      <div id="par-empty" class="empty">Sin paradas registradas hoy.</div>
     </div>
   </div>
 </div>
@@ -1180,6 +1354,26 @@ function bomLookup(codigo){
   return null;
 }
 
+function syncMerma(){
+  // Resetear todos los hidden fields a 0
+  const ids = ['m-tuco-col','m-peso-bajo','m-peso-alto','m-var-esp','m-saldo-bob',
+               'm-rol-hueco','m-rol-aire','m-rol-arr','m-tuco-arq'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value='0'; });
+
+  // Distribuir los 4 selectores a sus hidden fields
+  for(let i=1;i<=4;i++){
+    const sel = document.getElementById('ms-'+i);
+    const inp = document.getElementById('mk-'+i);
+    if(!sel || !inp) continue;
+    const motivo = sel.value;
+    const kg = parseFloat(inp.value)||0;
+    if(motivo && kg > 0){
+      const el = document.getElementById(motivo);
+      if(el) el.value = String(kg);
+    }
+  }
+}
+
 function recalc(){
   const prod=parseFloat(document.getElementById('f-prod').value)||0;
   const ant =parseFloat(document.getElementById('f-ant').value)||0;
@@ -1389,6 +1583,21 @@ function parar(){
   const ccPeso   =document.getElementById('cc-peso').checked?'✓':'';
   const ccCentro =document.getElementById('cc-centro').checked?'✓':'';
   const obs   =document.getElementById('f-obs').value.trim();
+  // Guardar parada integrada si fue llenada
+  const parHi  = (document.getElementById('par-hi-reg')||{}).value||'';
+  const parHf  = (document.getElementById('par-hf-reg')||{}).value||'';
+  const parMot = (document.getElementById('par-mot-reg')||{}).value||'';
+  if(parHi && parHf && parMot){
+    const [hhi,mmi]=parHi.split(':').map(Number);
+    const [hhf,mmf]=parHf.split(':').map(Number);
+    let mins=(hhf*60+mmf)-(hhi*60+mmi); if(mins<0)mins+=1440;
+    const phist=JSON.parse(localStorage.getItem('reb5_paradas')||'[]');
+    phist.unshift({fecha:new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}),
+      turno:sesion?sesion.turno:'',maq:sesion?sesion.maq:'',
+      hinicio:parHi,hfin:parHf,minutos:mins,motivo:parMot,obs,ts:Date.now()});
+    localStorage.setItem('reb5_paradas',JSON.stringify(phist));
+    renderParadas();
+  }
   const horas =diffHoras(sesion.hinicio,hfin);
 
   const rec={
@@ -1537,6 +1746,11 @@ function reset(){
   document.getElementById('card-stop').style.display='none';
   document.getElementById('btn-ini').disabled=false;
   document.getElementById('op-panel').classList.remove('on');
+  // Resetear selectores de merma
+  for(let i=1;i<=4;i++){const s=document.getElementById('ms-'+i);if(s)s.value='';const k=document.getElementById('mk-'+i);if(k)k.value='';}
+  document.getElementById('par-hi-reg') && (document.getElementById('par-hi-reg').value='');
+  document.getElementById('par-hf-reg') && (document.getElementById('par-hf-reg').value='');
+  document.getElementById('par-mot-reg') && (document.getElementById('par-mot-reg').value='');
   ['f-op','f-hinicio','f-fecha','f-hfin','f-prod','f-ant','f-obs','f-mkg','f-mkg-color','f-bobina','f-peso-tuco','f-velocidad','f-tinsrv','f-treutil','f-cajas-prod','m-tuco-col','m-peso-bajo','m-peso-alto','m-var-esp','m-saldo-bob','m-rol-hueco','m-rol-aire','m-rol-arr','m-tuco-arq','f-lote-prod'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
@@ -1789,11 +2003,121 @@ function guardarMerma(){
   localStorage.setItem('reb5_merma_hist', JSON.stringify(hist));
 
   renderMermaHist();
+  renderGraficoMerma();
   toast('✔ Merma guardada','ok');
 
   // Limpiar campos
   document.getElementById('mk-real').value = '';
   document.getElementById('mk-diferencia').value = '';
+}
+
+function guardarParada(){
+  const maq   = document.getElementById('par-maq-sel').value;
+  const turno = document.getElementById('par-turno').value;
+  const hi    = document.getElementById('par-hinicio').value;
+  const hf    = document.getElementById('par-hfin').value;
+  const motivo= document.getElementById('par-motivo').value;
+  const obs   = document.getElementById('par-obs').value;
+
+  if(!maq || !hi || !hf || !motivo){ toast('Completa máquina, horarios y motivo','warn'); return; }
+
+  const [hhi,mmi] = hi.split(':').map(Number);
+  const [hhf,mmf] = hf.split(':').map(Number);
+  let mins = (hhf*60+mmf)-(hhi*60+mmi);
+  if(mins < 0) mins += 1440;
+
+  const par = {
+    fecha: ddmmyyyy(), turno, maq, hinicio: hi, hfin: hf,
+    minutos: mins, motivo, obs, ts: Date.now()
+  };
+
+  const hist = JSON.parse(localStorage.getItem('reb5_paradas')||'[]');
+  hist.unshift(par);
+  localStorage.setItem('reb5_paradas', JSON.stringify(hist));
+
+  // Limpiar campos
+  document.getElementById('par-hinicio').value = '';
+  document.getElementById('par-hfin').value = '';
+  document.getElementById('par-obs').value = '';
+  document.getElementById('par-motivo').value = '';
+
+  renderParadas();
+  toast('✔ Parada registrada: '+mins+' min','ok');
+}
+
+function renderParadas(){
+  const hoy = ddmmyyyy();
+  const hist = JSON.parse(localStorage.getItem('reb5_paradas')||'[]');
+  const hoy_pars = hist.filter(p=>p.fecha===hoy);
+
+  const tbody = document.getElementById('par-body');
+  const empty = document.getElementById('par-empty');
+  if(!tbody) return;
+  empty.style.display = hoy_pars.length ? 'none' : 'block';
+
+  tbody.innerHTML = hoy_pars.map(p=>`<tr>
+    <td><span class="bdg ${p.turno==='DIA'?'b-dia':'b-noche'}">${p.turno}</span></td>
+    <td class="td-op">${p.maq}</td>
+    <td class="td-s">${p.hinicio}</td>
+    <td class="td-s">${p.hfin}</td>
+    <td class="td-n" style="color:var(--warn)">${p.minutos}</td>
+    <td class="td-s">${p.motivo}</td>
+    <td class="td-s">${p.obs||'—'}</td>
+  </tr>`).join('');
+
+  // KPIs
+  const totalMins = hoy_pars.reduce((s,p)=>s+p.minutos,0);
+  const maqCount = {};
+  hoy_pars.forEach(p=>{ maqCount[p.maq]=(maqCount[p.maq]||0)+1; });
+  const maqTop = Object.entries(maqCount).sort((a,b)=>b[1]-a[1])[0];
+
+  const parCount = document.getElementById('par-count');
+  const parTiempo = document.getElementById('par-tiempo');
+  const parMaq = document.getElementById('par-maq');
+  if(parCount) parCount.textContent = hoy_pars.length;
+  if(parTiempo) parTiempo.textContent = totalMins + ' min';
+  if(parMaq) parMaq.textContent = maqTop ? 'Máq '+maqTop[0] : '—';
+}
+
+function renderMaqParadas(){
+  const sel = document.getElementById('par-maq-sel');
+  if(!sel) return;
+  const maqList = maquinas.length ? maquinas :
+    JSON.parse(localStorage.getItem('reb5_maquinas')||'["1","2","4","5","6","7","8","9","10"]');
+  sel.innerHTML = '<option value="">— Seleccionar —</option>' +
+    maqList.map(m=>`<option value="${m}">Máquina ${m}</option>`).join('');
+}
+
+function renderGraficoMerma(){
+  const canvas = document.getElementById('merma-chart');
+  if(!canvas) return;
+  const hist = JSON.parse(localStorage.getItem('reb5_merma_hist')||'[]');
+  if(!hist.length){ canvas.style.display='none'; return; }
+  canvas.style.display='block';
+
+  const labels = hist.slice(0,10).reverse().map(h=>h.fecha+' '+h.turno.substring(0,1));
+  const teorica = hist.slice(0,10).reverse().map(h=>Number(h.teorica)||0);
+  const real = hist.slice(0,10).reverse().map(h=>Number(h.real)||0);
+
+  if(window._mermaChart) window._mermaChart.destroy();
+  window._mermaChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Teórica (KG)', data: teorica, backgroundColor: 'rgba(0,180,216,.7)', borderRadius: 6 },
+        { label: 'Real (KG)',    data: real,    backgroundColor: 'rgba(245,158,11,.7)', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#8aaac8' } } },
+      scales: {
+        x: { ticks: { color: '#8aaac8' }, grid: { color: '#1e3a5a' } },
+        y: { ticks: { color: '#8aaac8' }, grid: { color: '#1e3a5a' } }
+      }
+    }
+  });
 }
 
 function renderMermaEncargados(){
@@ -2187,6 +2511,9 @@ renderMermaHist();
 const _bomCache = JSON.parse(localStorage.getItem('reb5_bom_cache')||'null');
 if(_bomCache) window.BOM_DATA_LIVE = _bomCache;
 cargarMPS(false);
+  renderParadas();
+  renderMaqParadas();
+  renderGraficoMerma();
 cargarBaseDatos();
 cargarBOMLive();
   // Inicializar fecha del módulo de merma con hoy
