@@ -467,78 +467,12 @@ tbody td{padding:7px 8px;white-space:nowrap;color:#111;}
     <input type="hidden" id="f-tinsrv" value="0">
     <input type="hidden" id="f-treutil" value="0">
 
-    <!-- MERMA: 4 filas selector + KG -->
-    <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin:14px 0 8px">⚠️ Merma — máx. 4 motivos</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <!-- Fila 1 -->
-      <div class="fl"><label>Motivo 1</label>
-        <select id="ms-1" onchange="syncMerma()">
-          <option value="">— Sin merma —</option>
-          <option value="m-tuco-col">Tuco Colapsado</option>
-          <option value="m-peso-bajo">Peso Bajo</option>
-          <option value="m-peso-alto">Peso Alto</option>
-          <option value="m-var-esp">Variación de espesor</option>
-          <option value="m-saldo-bob">Saldo de Bobina</option>
-          <option value="m-rol-hueco">Rollos Con Hueco</option>
-          <option value="m-rol-aire">Rollos Con Aire</option>
-          <option value="m-rol-arr">Rollos Con Arrugas</option>
-          <option value="m-tuco-arq">Tucos Arqueados</option>
-        </select>
-      </div>
-      <div class="fl"><label>KG</label>
-        <input type="number" id="mk-1" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
-      <!-- Fila 2 -->
-      <div class="fl"><label>Motivo 2</label>
-        <select id="ms-2" onchange="syncMerma()">
-          <option value="">— Sin merma —</option>
-          <option value="m-tuco-col">Tuco Colapsado</option>
-          <option value="m-peso-bajo">Peso Bajo</option>
-          <option value="m-peso-alto">Peso Alto</option>
-          <option value="m-var-esp">Variación de espesor</option>
-          <option value="m-saldo-bob">Saldo de Bobina</option>
-          <option value="m-rol-hueco">Rollos Con Hueco</option>
-          <option value="m-rol-aire">Rollos Con Aire</option>
-          <option value="m-rol-arr">Rollos Con Arrugas</option>
-          <option value="m-tuco-arq">Tucos Arqueados</option>
-        </select>
-      </div>
-      <div class="fl"><label>KG</label>
-        <input type="number" id="mk-2" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
-      <!-- Fila 3 -->
-      <div class="fl"><label>Motivo 3</label>
-        <select id="ms-3" onchange="syncMerma()">
-          <option value="">— Sin merma —</option>
-          <option value="m-tuco-col">Tuco Colapsado</option>
-          <option value="m-peso-bajo">Peso Bajo</option>
-          <option value="m-peso-alto">Peso Alto</option>
-          <option value="m-var-esp">Variación de espesor</option>
-          <option value="m-saldo-bob">Saldo de Bobina</option>
-          <option value="m-rol-hueco">Rollos Con Hueco</option>
-          <option value="m-rol-aire">Rollos Con Aire</option>
-          <option value="m-rol-arr">Rollos Con Arrugas</option>
-          <option value="m-tuco-arq">Tucos Arqueados</option>
-        </select>
-      </div>
-      <div class="fl"><label>KG</label>
-        <input type="number" id="mk-3" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
-      <!-- Fila 4 -->
-      <div class="fl"><label>Motivo 4</label>
-        <select id="ms-4" onchange="syncMerma()">
-          <option value="">— Sin merma —</option>
-          <option value="m-tuco-col">Tuco Colapsado</option>
-          <option value="m-peso-bajo">Peso Bajo</option>
-          <option value="m-peso-alto">Peso Alto</option>
-          <option value="m-var-esp">Variación de espesor</option>
-          <option value="m-saldo-bob">Saldo de Bobina</option>
-          <option value="m-rol-hueco">Rollos Con Hueco</option>
-          <option value="m-rol-aire">Rollos Con Aire</option>
-          <option value="m-rol-arr">Rollos Con Arrugas</option>
-          <option value="m-tuco-arq">Tucos Arqueados</option>
-        </select>
-      </div>
-      <div class="fl"><label>KG</label>
-        <input type="number" id="mk-4" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
+    <!-- MERMA: filas dinámicas -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red)">⚠️ Merma</div>
+      <button type="button" onclick="agregarFilaMerma()" style="background:var(--blue);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">+ Agregar merma</button>
     </div>
+    <div id="merma-filas-container" style="display:grid;gap:8px;margin-bottom:10px"></div>
 
     <!-- Hidden fields compatibilidad -->
     <input type="hidden" id="m-tuco-col"  value="0">
@@ -559,36 +493,14 @@ tbody td{padding:7px 8px;white-space:nowrap;color:#111;}
     <input type="hidden" id="cc-peso"     value="">
     <input type="hidden" id="cc-centro"   value="">
 
-    <!-- PARADA -->
-    <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--warn);margin:14px 0 8px">🛑 Parada del turno</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-      <div class="fl"><label>H. Inicio parada</label>
-        <input type="time" id="par-hi-reg"></div>
-      <div class="fl"><label>H. Fin parada</label>
-        <input type="time" id="par-hf-reg"></div>
-      <div class="fl"><label>Motivo parada</label>
-        <select id="par-mot-reg">
-          <option value="">— Sin parada —</option>
-          <option value="MANTENIMIENTO CORRECTIVO">MANTENIMIENTO CORRECTIVO</option>
-          <option value="MANTENIMIENTO PREVENTIVO">MANTENIMIENTO PREVENTIVO</option>
-          <option value="FALTA DE MATERIAL">FALTA DE MATERIAL</option>
-          <option value="FALLA MECÁNICA">FALLA MECÁNICA</option>
-          <option value="CAMBIO DE BOBINA">CAMBIO DE BOBINA</option>
-          <option value="FALLA ELÉCTRICA">FALLA ELÉCTRICA</option>
-          <option value="CAMBIO DE FORMATO">CAMBIO DE FORMATO</option>
-          <option value="LIMPIEZA">LIMPIEZA</option>
-          <option value="SIN OPERARIO">SIN OPERARIO</option>
-          <option value="OTRO">OTRO</option>
-        </select>
-      </div>
+    <!-- PARADA DINÁMICA -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--warn)">🛑 Paradas del turno</div>
+      <button type="button" onclick="agregarFilaParada()" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">+ Agregar parada</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <div class="fl"><label>Observación parada</label>
-        <input type="text" id="par-obs-reg" placeholder="Detalle de la parada...">
-      </div>
-      <div class="fl"><label>Comentario registro (AN)</label>
-        <input type="text" id="f-obs" placeholder="Comentario del turno...">
-      </div>
+    <div id="parada-filas-container" style="display:grid;gap:8px;margin-bottom:10px"></div>
+    <div class="fl" style="margin-bottom:10px"><label>Comentario registro (AN)</label>
+      <input type="text" id="f-obs" placeholder="Comentario del turno...">
     </div>
 
     <button class="btn btn-stop" onclick="parar()">⏹ REGISTRAR Y GUARDAR</button>
@@ -1368,24 +1280,106 @@ function bomLookup(codigo){
   return null;
 }
 
+
+// ── MERMA DINÁMICA ──────────────────────────────────────
+let _mermaCount = 0;
+function agregarFilaMerma(){
+  _mermaCount++;
+  const n = _mermaCount;
+  const c = document.getElementById('merma-filas-container');
+  const row = document.createElement('div');
+  row.id = 'merma-row-'+n;
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end';
+  row.innerHTML = `
+    <div class="fl"><label>Motivo ${n}</label>
+      <select id="ms-${n}" onchange="syncMerma()">
+        <option value="">— Sin merma —</option>
+          <option value="m-tuco-col">Tuco Colapsado</option>
+          <option value="m-peso-bajo">Peso Bajo</option>
+          <option value="m-peso-alto">Peso Alto</option>
+          <option value="m-var-esp">Variación de espesor</option>
+          <option value="m-saldo-bob">Saldo de Bobina</option>
+          <option value="m-rol-hueco">Rollos Con Hueco</option>
+          <option value="m-rol-aire">Rollos Con Aire</option>
+          <option value="m-rol-arr">Rollos Con Arrugas</option>
+          <option value="m-tuco-arq">Tucos Arqueados</option>
+      </select></div>
+    <div class="fl"><label>KG</label>
+      <input type="number" id="mk-${n}" placeholder="0" step="0.01" min="0" oninput="syncMerma()"></div>
+    <button type="button" onclick="quitarFilaMerma(${n})" style="background:#fee2e2;border:none;border-radius:6px;padding:9px 12px;color:var(--red);font-weight:900;cursor:pointer;font-size:14px">✕</button>
+  `;
+  c.appendChild(row);
+  syncMerma();
+}
+function quitarFilaMerma(n){
+  const el = document.getElementById('merma-row-'+n);
+  if(el) el.remove();
+  syncMerma();
+}
+
+// ── PARADA DINÁMICA ──────────────────────────────────────
+let _paradaCount = 0;
+function agregarFilaParada(){
+  _paradaCount++;
+  const n = _paradaCount;
+  const c = document.getElementById('parada-filas-container');
+  const row = document.createElement('div');
+  row.id = 'parada-row-'+n;
+  row.style.cssText = 'background:#fff7ed;border:1.5px solid #fed7aa;border-radius:8px;padding:10px;position:relative';
+  row.innerHTML = `
+    <button type="button" onclick="quitarFilaParada(${n})" style="position:absolute;top:6px;right:8px;background:none;border:none;color:var(--red);font-size:16px;font-weight:900;cursor:pointer">✕</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div class="fl"><label>H. Inicio</label>
+        <input type="time" id="par-hi-${n}" class="par-hi-dyn"></div>
+      <div class="fl"><label>H. Fin</label>
+        <input type="time" id="par-hf-${n}" class="par-hf-dyn"></div>
+      <div class="fl"><label>Motivo</label>
+        <select id="par-mot-${n}" class="par-mot-dyn">
+          <option value="">— Sin parada —</option>
+          <option value="MANTENIMIENTO CORRECTIVO">MANTENIMIENTO CORRECTIVO</option>
+          <option value="MANTENIMIENTO PREVENTIVO">MANTENIMIENTO PREVENTIVO</option>
+          <option value="FALTA DE MATERIAL">FALTA DE MATERIAL</option>
+          <option value="FALLA MECÁNICA">FALLA MECÁNICA</option>
+          <option value="CAMBIO DE BOBINA">CAMBIO DE BOBINA</option>
+          <option value="FALLA ELÉCTRICA">FALLA ELÉCTRICA</option>
+          <option value="CAMBIO DE FORMATO">CAMBIO DE FORMATO</option>
+          <option value="LIMPIEZA">LIMPIEZA</option>
+          <option value="SIN OPERARIO">SIN OPERARIO</option>
+          <option value="OTRO">OTRO</option>
+        </select></div>
+    </div>
+  `;
+  c.appendChild(row);
+}
+function quitarFilaParada(n){
+  const el = document.getElementById('parada-row-'+n);
+  if(el) el.remove();
+}
+
+// Iniciar con 1 fila de merma y 1 de parada al cargar
+document.addEventListener('DOMContentLoaded', ()=>{
+  agregarFilaMerma();
+  agregarFilaParada();
+});
+
 function syncMerma(){
   // Resetear todos los hidden fields a 0
   const ids = ['m-tuco-col','m-peso-bajo','m-peso-alto','m-var-esp','m-saldo-bob',
                'm-rol-hueco','m-rol-aire','m-rol-arr','m-tuco-arq'];
   ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value='0'; });
 
-  // Distribuir los 4 selectores a sus hidden fields
-  for(let i=1;i<=4;i++){
-    const sel = document.getElementById('ms-'+i);
-    const inp = document.getElementById('mk-'+i);
-    if(!sel || !inp) continue;
+  // Leer todas las filas dinámicas
+  document.querySelectorAll('#merma-filas-container [id^="ms-"]').forEach(sel=>{
+    const n = sel.id.replace('ms-','');
+    const inp = document.getElementById('mk-'+n);
+    if(!inp) return;
     const motivo = sel.value;
     const kg = parseFloat(inp.value)||0;
     if(motivo && kg > 0){
       const el = document.getElementById(motivo);
       if(el) el.value = String(kg);
     }
-  }
+  });
 }
 
 function recalc(){
@@ -1599,21 +1593,25 @@ function parar(){
   const obs   =document.getElementById('f-obs') ? (document.getElementById('f-obs').value||'').trim() : '';
   const obsParada = (document.getElementById('par-obs-reg')||{}).value||'';
   // Guardar parada integrada si fue llenada
-  const parHi  = (document.getElementById('par-hi-reg')||{}).value||'';
-  const parHf  = (document.getElementById('par-hf-reg')||{}).value||'';
-  const parMot = (document.getElementById('par-mot-reg')||{}).value||'';
-  if(parHi && parHf && parMot){
-    const [hhi,mmi]=parHi.split(':').map(Number);
-    const [hhf,mmf]=parHf.split(':').map(Number);
-    let mins=(hhf*60+mmf)-(hhi*60+mmi); if(mins<0)mins+=1440;
-    const parObj={fecha:ddmmyyyy(),turno:sesion?sesion.turno:'',maq:sesion?sesion.maq:'',
-      hinicio:parHi,hfin:parHf,minutos:mins,motivo:parMot,obs:obsParada,ts:Date.now()};
-    const phist=JSON.parse(localStorage.getItem('reb5_paradas')||'[]');
-    phist.unshift(parObj);
-    localStorage.setItem('reb5_paradas',JSON.stringify(phist));
-    enviarParadaGS(parObj);
-    renderParadas();
-  }
+  // Recoger TODAS las paradas dinámicas
+  document.querySelectorAll('#parada-filas-container [id^="par-hi-"]').forEach(hiEl=>{
+    const n = hiEl.id.replace('par-hi-','');
+    const parHi  = hiEl.value||'';
+    const parHf  = (document.getElementById('par-hf-'+n)||{}).value||'';
+    const parMot = (document.getElementById('par-mot-'+n)||{}).value||'';
+    if(parHi && parHf && parMot){
+      const [hhi,mmi]=parHi.split(':').map(Number);
+      const [hhf,mmf]=parHf.split(':').map(Number);
+      let mins=(hhf*60+mmf)-(hhi*60+mmi); if(mins<0)mins+=1440;
+      const parObj={fecha:ddmmyyyy(),turno:sesion?sesion.turno:'',maq:sesion?sesion.maq:'',
+        hinicio:parHi,hfin:parHf,minutos:mins,motivo:parMot,obs:'',ts:Date.now()};
+      const phist=JSON.parse(localStorage.getItem('reb5_paradas')||'[]');
+      phist.unshift(parObj);
+      localStorage.setItem('reb5_paradas',JSON.stringify(phist));
+      enviarParadaGS(parObj);
+    }
+  });
+  renderParadas();
   const horas =diffHoras(sesion.hinicio,hfin);
 
   const rec={
@@ -1775,7 +1773,11 @@ function reset(){
   document.getElementById('par-hi-reg') && (document.getElementById('par-hi-reg').value='');
   document.getElementById('par-hf-reg') && (document.getElementById('par-hf-reg').value='');
   document.getElementById('par-mot-reg') && (document.getElementById('par-mot-reg').value='');
-  document.getElementById('par-obs-reg') && (document.getElementById('par-obs-reg').value='');
+  // Resetear filas dinámicas de merma y parada
+  const mc = document.getElementById('merma-filas-container');
+  const pc = document.getElementById('parada-filas-container');
+  if(mc){ mc.innerHTML=''; _mermaCount=0; agregarFilaMerma(); }
+  if(pc){ pc.innerHTML=''; _paradaCount=0; agregarFilaParada(); }
   ['f-op','f-hinicio','f-fecha','f-hfin','f-prod','f-ant','f-obs','f-mkg','f-mkg-color','f-bobina','f-peso-tuco','f-velocidad','f-tinsrv','f-treutil','f-cajas-prod','m-tuco-col','m-peso-bajo','m-peso-alto','m-var-esp','m-saldo-bob','m-rol-hueco','m-rol-aire','m-rol-arr','m-tuco-arq','f-lote-prod'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
