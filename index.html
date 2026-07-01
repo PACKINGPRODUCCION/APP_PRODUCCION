@@ -1591,7 +1591,7 @@ function parar(){
   const ccPeso   =document.getElementById('cc-peso').checked?'✓':'';
   const ccCentro =document.getElementById('cc-centro').checked?'✓':'';
   const obs   =document.getElementById('f-obs') ? (document.getElementById('f-obs').value||'').trim() : '';
-  const obsParada = (document.getElementById('par-obs-reg')||{}).value||'';
+  // obsParada eliminado - paradas van en filas dinámicas
   // Guardar parada integrada si fue llenada
   // Recoger TODAS las paradas dinámicas
   document.querySelectorAll('#parada-filas-container [id^="par-hi-"]').forEach(hiEl=>{
@@ -1655,10 +1655,10 @@ function parar(){
     hinicio:  sesion.hinicio,
     hfin,
     velocidad:velocidad,
-    paradaHInicio: parHi   ||'',
-    paradaHFin:    parHf   ||'',
-    paradaMinutos: (parHi&&parHf)?(()=>{const[hhi,mmi]=parHi.split(':').map(Number);const[hhf,mmf]=parHf.split(':').map(Number);let m=(hhf*60+mmf)-(hhi*60+mmi);if(m<0)m+=1440;return m;})():'',
-    paradaMotivo:  parMot  ||'',
+    paradaHInicio: '',
+    paradaHFin:    '',
+    paradaMinutos: '',
+    paradaMotivo:  '',
     rollosCI: '',
     ccArrugas, ccAire, ccCaja, ccPeso, ccCentro,
     // Extra para filtros
