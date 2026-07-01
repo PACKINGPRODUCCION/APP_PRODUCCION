@@ -895,7 +895,7 @@ tbody td{padding:7px 8px;white-space:nowrap;color:#111;}
    CONFIGURACIÓN — URLs Google Sheets
 ══════════════════════════════════════════ */
 const GS_MPS    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSpDLt6JzXRk2YHhG2hZbMTr-l0_uNujIZK8h5sSO7mHyRU6VAn0C3wMJV1TC3mSemg61TJ4g3f4-ta/pub?gid=449365246&single=true&output=csv';
-const GS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxYBJI_mJhGA8Y3BVjhncBLpDsX6i_ZYADqJnLPPLajP82LhPkRbhsFSsaHeOhT7Nhf/exec';
+const GS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxPfZhCA1Kxr-iW-vynce-BjCUuoDMKrk5Gvfl0Os8c1u3mrt0nktm5eB6E3h2391q3/exec';
 
 /* ══════════════════════════════════════════
    OPs LOCAL (del MPS Excel)
@@ -2074,21 +2074,26 @@ function guardarParada(){
 }
 
 function enviarParadaGS(par){
-  const totalHr = par.minutos ? (par.minutos/60).toFixed(2) : '0';
-  const maqNombre = par.maq ? (String(par.maq).toUpperCase().includes('REBOBINADORA') ? par.maq : 'REBOBINADORA # '+par.maq) : '';
-  const fd = new FormData();
-  fd.append('tipo',       'PARADA');
-  fd.append('fecha',      par.fecha    ||'');
-  fd.append('maquina',    maqNombre);
-  fd.append('motivo',     par.motivo   ||'MANTENIMIENTO CORRECTIVO');
-  fd.append('tip',        'P. MECANICA');
-  fd.append('hrInicio',   par.hinicio  ||'');
-  fd.append('hrFin',      par.hfin     ||'');
-  fd.append('totalHr',    totalHr);
-  fd.append('observacion',par.obs      ||'');
-  fetch(GS_SCRIPT,{method:'POST',mode:'no-cors',body:fd})
-    .then(()=>toast('☁ Parada enviada','ok'))
-    .catch(()=>toast('⚠ Sin conexión','warn'));
+  var totalHr = par.minutos ? (par.minutos/60).toFixed(2) : '0';
+  var maqNombre = par.maq ? (String(par.maq).toUpperCase().indexOf('REBOBINADORA')>=0 ? par.maq : 'REBOBINADORA # '+par.maq) : '';
+  var url = GS_SCRIPT
+    + '?action=registrarParada'
+    + '&fecha='       + encodeURIComponent(par.fecha   ||'')
+    + '&maquina='     + encodeURIComponent(maqNombre)
+    + '&motivo='      + encodeURIComponent(par.motivo  ||'MANTENIMIENTO CORRECTIVO')
+    + '&tip=P.%20MECANICA'
+    + '&hrInicio='    + encodeURIComponent(par.hinicio ||'')
+    + '&hrFin='       + encodeURIComponent(par.hfin    ||'')
+    + '&totalHr='     + encodeURIComponent(totalHr)
+    + '&observacion=' + encodeURIComponent(par.obs     ||'')
+    + '&callback=_pCB';
+  window._pCB = function(r){ 
+    if(r&&r.success) toast('☁ Parada en Sheet','ok'); 
+    delete window._pCB; 
+  };
+  var s=document.createElement('script');
+  s.src=url;
+  document.head.appendChild(s);
 }
 
 function renderParadas(){
